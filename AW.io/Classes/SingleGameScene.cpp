@@ -33,6 +33,7 @@ bool SingleGameScene::init()
 
 	//控制人物移动
 	auto MoveListen = EventListenerTouchOneByOne::create();
+	MoveListen->setSwallowTouches(true);
 	MoveListen->onTouchBegan = CC_CALLBACK_2(SingleGameScene::MoveBegan, this);
 	MoveListen->onTouchMoved = CC_CALLBACK_2(SingleGameScene::MoveMoved, this);
 	MoveListen->onTouchEnded = CC_CALLBACK_2(SingleGameScene::MoveEnded, this);
