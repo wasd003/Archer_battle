@@ -12,12 +12,14 @@ bool SingleGameScene::init()
 	this->rockerBG_Position = Vec2(100, 100);
 	this->current_point = rockerBG_Position;
 	//加载地图
-	TMXTiledMap* map = TMXTiledMap::create("Tank2.tmx");
+	this->map = TMXTiledMap::create("Tank2.tmx");
 	map->setTag(MapTag);
-	map->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
+	//map->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
 	this->addChild(map,-1);
 	//加载所有对象
-	InitAllPoint(map);
+	InitAllPoint(map); 
+	//加载障碍层
+	stop = map->getLayer("stop");
 
 	//在屏幕正中央创建主角
 	Person* model = Person::create("person.png");
@@ -51,6 +53,20 @@ bool SingleGameScene::init()
 
 	return true;
 }
+
+Vec2 SingleGameScene::exchange(Vec2 pos)
+{
+	Vec2 res;
+	Vec2 anchor = map->getPosition();//得到的是左下角的坐标 woc。不是中心点的坐标
+	int anchor_y = map->getMapSize().height ;
+	int anchor_x = 0;
+	int dir_x = (pos.x - anchor.x)/map->getTileSize().width;
+	int dir_y = (anchor.y - pos.y)/map->getTileSize().height;
+	res.y = anchor_y + dir_y;
+	res.x = anchor_x + dir_x;
+	return res;
+}
+
 bool SingleGameScene::MoveBegan(Touch* t, Event* e)//人物移动
 {
 	auto rocker = this->getChildByTag(RockerTag);
@@ -73,13 +89,26 @@ void SingleGameScene::MoveEnded(Touch* t, Event *e)
 }
 void SingleGameScene::MovePerson(float t)
 {
-	TMXTiledMap* map = static_cast<TMXTiledMap*>(this->getChildByTag(MapTag));
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	float dir = Rocker::getRad(rockerBG_Position, current_point);
 	if (rockerBG_Position == current_point)return;
 	float dx = model->speed * cos(dir);
 	float dy = model->speed * sin(dir);
-	map->setPosition(Vec2(map->getPositionX() - dx, map->getPositionY() - dy));
+	Vec2 next_pos = Vec2(model->getPositionX() + dx, model->getPositionY() + dy);//人物下一刻即将移动到的位置
+
+	Vec2 tile_next_pos = SingleGameScene::exchange(next_pos);//下一刻位置的瓦片地图表达形式
+	int gid = stop->getTileGIDAt(tile_next_pos);
+	AllGid.push_back(gid);
+	movement.push_back(p(std::make_pair(tile_next_pos.x, tile_next_pos.y), gid));
+	if (AllGid.size() == 100)
+	{
+		log("DEBUG");
+	}
+	if (gid != is_stop)//碰撞检测
+	{
+		map->setPosition(Vec2(map->getPositionX() - dx, map->getPositionY() - dy));
+	}
+	
 }
 
 bool SingleGameScene::ArrowBegan(Touch* t, Event *e)
@@ -107,7 +136,6 @@ void SingleGameScene::ArrowMoved(Touch* t, Event*e)//射箭
 void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 {
 
-	TMXTiledMap* map = static_cast<TMXTiledMap*>(this->getChildByTag(MapTag));
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	auto arrow = Arrow::create("CloseNormal.png");
 	arrow->setPosition(model->getPosition());
