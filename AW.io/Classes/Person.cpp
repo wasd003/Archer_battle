@@ -20,6 +20,6 @@ void Person::set()
 	blue = 0;
 	attack = 1.0;
 	defence = 1.0;
-	speed = 5;
+	speed = 3;
 	this->weapon.arrow_attack = 10;
 }

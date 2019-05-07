@@ -4,6 +4,7 @@
 #include "Arrow.h"
 #include "Person.h"
 #include<vector>
+#include<set>
 USING_NS_CC;
 class SingleGameScene :public Layer
 {
@@ -23,7 +24,6 @@ public:
 	static const int tag_rocker = 50;//遥杆标签
 	static const int tag_rockerBG = 60;//摇杆背景标签
 	static const int is_stop = 15;//障碍物图块的GID
-
 	//储存容器
 	Vector<TDpoint*> allpoint;//保存所有点
 	Vector<Arrow*>AllArrow;//保存所有箭
@@ -37,6 +37,8 @@ public:
 	Vec2 start;//射箭时初始的触摸坐标
 	TMXTiledMap* map;//地图
 	TMXLayer* stop; //障碍层
+	TMXLayer* background;//背景层
+	int height;//从人物的中心点出发到达矩形的四条边的距离
 
 
 	//触摸回调函数系列
@@ -52,15 +54,7 @@ public:
 	
 	
 	//功能函数
-	Vec2 exchange(Vec2 pos);
-
-	//临时（debug用）
-	std::vector<int>AllGid;
-	struct p
-	{
-		std::pair<int, int>xy;
-		int gid;
-		p(std::pair<int, int> xy, int gid) :xy(xy), gid(gid) {}
-	};
-	std::vector<p>movement;
+	Vec2 exchange(Vec2 pos);//将openGL坐标转化为瓦片地图坐标
+	bool check(Vec2 pos);//判断能否移动
+	
 };

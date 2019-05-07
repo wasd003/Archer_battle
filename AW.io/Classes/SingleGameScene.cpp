@@ -8,9 +8,12 @@ USING_NS_CC;
 bool SingleGameScene::init()
 {
 	if (!Layer::init())return false;
+
+	//初始化全局属性
 	auto winsize = Director::getInstance()->getWinSize();
 	this->rockerBG_Position = Vec2(100, 100);
 	this->current_point = rockerBG_Position;
+	height = 50;
 	//加载地图
 	this->map = TMXTiledMap::create("Tank2.tmx");
 	map->setTag(MapTag);
@@ -20,7 +23,7 @@ bool SingleGameScene::init()
 	InitAllPoint(map); 
 	//加载障碍层
 	stop = map->getLayer("stop");
-
+	background = map->getLayer("background");
 	//在屏幕正中央创建主角
 	Person* model = Person::create("person.png");
 	model->setTag(ModelTag);
@@ -51,6 +54,7 @@ bool SingleGameScene::init()
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(ArrowListen, this);
 	this->schedule(schedule_selector(SingleGameScene::MoveArrow, this));
 
+	
 	return true;
 }
 
@@ -65,6 +69,12 @@ Vec2 SingleGameScene::exchange(Vec2 pos)
 	res.y = anchor_y + dir_y;
 	res.x = anchor_x + dir_x;
 	return res;
+}
+bool SingleGameScene::check(Vec2 pos)
+{
+	Vec2 tile_pos = exchange(pos);
+	int gid = stop->getTileGIDAt(tile_pos);
+	return gid != is_stop;
 }
 
 bool SingleGameScene::MoveBegan(Touch* t, Event* e)//人物移动
@@ -94,21 +104,29 @@ void SingleGameScene::MovePerson(float t)
 	if (rockerBG_Position == current_point)return;
 	float dx = model->speed * cos(dir);
 	float dy = model->speed * sin(dir);
-	Vec2 next_pos = Vec2(model->getPositionX() + dx, model->getPositionY() + dy);//人物下一刻即将移动到的位置
-
-	Vec2 tile_next_pos = SingleGameScene::exchange(next_pos);//下一刻位置的瓦片地图表达形式
-	int gid = stop->getTileGIDAt(tile_next_pos);
-	AllGid.push_back(gid);
-	movement.push_back(p(std::make_pair(tile_next_pos.x, tile_next_pos.y), gid));
-	if (AllGid.size() == 100)
+	Vec2 next_pos = Vec2(model->getPositionX() +height*(1+cos(dir))+ dx, model->getPositionY() +height*(1+sin(dir))+ dy);//人物下一刻即将移动到的位置  将人物视为一个圆柱体
+	Vec2 next_pos_right= Vec2(model->getPositionX() + height * 2 + dx, model->getPositionY() + height ); 
+	if (dx < 0)
 	{
-		log("DEBUG");
+		next_pos_right = Vec2(model->getPositionX()  + dx, model->getPositionY() + height);
 	}
-	if (gid != is_stop)//碰撞检测
+	Vec2 next_pos_up= Vec2(model->getPositionX() + height, model->getPositionY() + height * 2 + dy);
+	if (dy < 0)
+	{
+		next_pos_up = Vec2(model->getPositionX() + height, model->getPositionY()  + dy);
+	}
+	if (check(next_pos))//碰撞检测
 	{
 		map->setPosition(Vec2(map->getPositionX() - dx, map->getPositionY() - dy));
 	}
-	
+	else if(check(next_pos_right))
+	{
+		map->setPositionX(map->getPositionX() - dx);
+	}
+	else if (check(next_pos_up))
+	{
+		map->setPositionY(map->getPositionY() - dy);
+	}
 }
 
 bool SingleGameScene::ArrowBegan(Touch* t, Event *e)
@@ -137,7 +155,7 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 {
 
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
-	auto arrow = Arrow::create("CloseNormal.png");
+	auto arrow = Arrow::CreateArrow("CloseNormal.png");
 	arrow->setPosition(model->getPosition());
 	float dir = Rocker::getRad(start, t->getLocation());
 	arrow->dir = dir;
@@ -145,23 +163,29 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 }
 void SingleGameScene::MoveArrow(float t)
 {
-	//待添加：：对箭的碰撞检测，以及销毁。注意：：销毁的时候除了要将它从AllArrow的vector中移除，也需要将他从用来判重的se中删除
+	Vector<Arrow*>ToErase;
 	for (auto nowArrow : AllArrow)
 	{
-		if (!se.count(nowArrow))
+		
+		if (!se.count(nowArrow))//添加箭
 		{
 			this->addChild(nowArrow);
 			se.insert(nowArrow);
 		}
-		float dx = nowArrow->speed*cos(nowArrow->dir);
+		float dx = nowArrow->speed*cos(nowArrow->dir);//移动箭
 		float dy = nowArrow->speed*sin(nowArrow->dir);
 		nowArrow->setPosition(Vec2(nowArrow->getPositionX() + dx, nowArrow->getPositionY() + dy));
-#if 0
-		for (auto x : allpoint)
+		
+		if (!check(nowArrow->getPosition()))//箭与墙壁的碰撞检测
 		{
-			x->
+			this->removeChild(nowArrow);
+			ToErase.pushBack(nowArrow);
 		}
-#endif
+	}
+	for (auto x : ToErase)
+	{
+		AllArrow.eraseObject(x);
+		se.erase(x);
 	}
 }
 Scene* SingleGameScene::CreateScene()

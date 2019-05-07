@@ -7,6 +7,7 @@ public:
 	int arrow_attack;
 	double dir;
 	int speed;
-	void set();
-	static Arrow* create(const std::string &filename);
+	static Arrow*CreateArrow(const std::string &filename);
+	void InitArrow(const std::string &filename);
+	CREATE_FUNC(Arrow);
 };
