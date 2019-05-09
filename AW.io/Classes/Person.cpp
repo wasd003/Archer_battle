@@ -1,20 +1,20 @@
 #include "Person.h"
-Person* Person::create(const std::string& filename)
+Person* Person::CreatePerson(const std::string& filename)
 {
-	static Person* sprite = new Person;
-	if (sprite&&sprite->initWithFile(filename))
+	Person* sprite = Person::create();
+	if (sprite)
 	{
-		sprite->autorelease();
-		sprite->set();
+		sprite->InitPerson(filename);
 		return sprite;
 	}
 	CC_SAFE_DELETE(sprite);
 	return nullptr;
 
 }
-
-void Person::set()
+void Person::InitPerson(const std::string &filename)
 {
+	auto sprite = Sprite::create(filename);
+	this->addChild(sprite);
 	blood = 100;
 	max_blood = 100;
 	blue = 0;
