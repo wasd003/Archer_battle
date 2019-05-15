@@ -14,7 +14,7 @@ public:
 	bool init();
 	static Scene* CreateScene();
 	void InitAllPoint(TMXTiledMap*map);
-
+	void InitValue();
 
 	//标签系列
 	static const int MapTag = 88;//地图的标签
@@ -51,7 +51,10 @@ public:
 	int attack_area;//方圆attack_area内，如果有人，会默认朝该人移动
 	int min_attack_area;//怪物之间距离允许的最小值
 	Person* NullPerson;
-
+	Vec2 One;//四个象限的地图角的坐标
+	Vec2 Two;
+	Vec2 Three;
+	Vec2 Four;
 
 
 	//触摸回调函数系列
@@ -71,7 +74,7 @@ public:
 	bool check(Vec2 pos);//判断能否移动
 	inline int random(int a, int b);//随机数
 	inline double distance(Vec2 pos1, Vec2 pos2);//openGL坐标距离
-
+	void GetPos();//获得地图的四个角的坐标
 
 	//添加AI
 	void CreateMonster(float t);
@@ -80,7 +83,8 @@ public:
 	void Shoot(float t);
 	void Hurt(float t);//人与箭的碰撞检测
 	void Dead(float t);//人的死亡判定，资源回收
-
+	void InitMonster();
 	//dbeug
 	int counts;
+
 };

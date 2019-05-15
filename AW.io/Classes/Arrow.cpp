@@ -14,8 +14,10 @@ void Arrow:: InitArrow(const std::string &filename)
 {
 	auto sprite = Sprite::create(filename);
 	this->addChild(sprite);
-	this->arrow_attack = 20;
+	this->arrow_attack = 1;
 	this->arrow_size = 40;
+	this->range = 250;
 	dir = 0.0;
+	this->master = nullptr;
 	speed = 10;
 }

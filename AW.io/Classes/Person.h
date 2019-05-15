@@ -3,6 +3,7 @@
 #include "Arrow.h"
 #include <string>
 USING_NS_CC;
+class Arrow;
 class Person :public Sprite
 {
 public:
@@ -16,5 +17,5 @@ public:
 	int speed;//移动速度
 	int arrow_speed;//箭的移动速度
 	CREATE_FUNC(Person);
-	Arrow weapon;
+	Arrow* weapon;
 };

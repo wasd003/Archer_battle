@@ -21,5 +21,8 @@ void Person::InitPerson(const std::string &filename)
 	attack = 1.0;
 	defence = 1.0;
 	speed = 3;
-	this->weapon.arrow_attack = 10;
+	if (this->weapon)
+	{
+		this->weapon->arrow_attack = 10;
+	}
 }
