@@ -39,6 +39,8 @@ bool SingleGameScene::init()
 	model->blood = 1000000000;
 	this->addChild(model);
 	model->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
+	//model->setRotation(385);
+	//auto xx=model->getRotation();
 	AllPerson.pushBack(model);
 
 
@@ -52,7 +54,7 @@ bool SingleGameScene::init()
 	this->addChild(rocker);
 	rocker->StartRocker();
 
-
+#if 0
 	//实现怪物补充，移动，攻击，受击检测，死亡
 	this->schedule(schedule_selector(SingleGameScene::CreateMonster), 1);
 	this->schedule(schedule_selector(SingleGameScene::MoveDirect, this));
@@ -61,7 +63,7 @@ bool SingleGameScene::init()
 	this->schedule(schedule_selector(SingleGameScene::MoveArrow, this));
 	this->schedule(schedule_selector(SingleGameScene::Hurt, this));
 	this->schedule(schedule_selector(SingleGameScene::Dead, this));
-
+#endif
 
 	//控制人物移动
 	auto MoveListen = EventListenerTouchOneByOne::create();
@@ -144,7 +146,7 @@ void SingleGameScene::MoveEnded(Touch* t, Event *e)
 }
 void SingleGameScene::MovePerson(float t)
 {
-	log("%f %f", map->getPositionX(), map->getPositionY());
+	//log("%f %f", map->getPositionX(), map->getPositionY());
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	float dir = Rocker::getRad(rockerBG_Position, current_point);
 	if (rockerBG_Position == current_point)return;
@@ -210,21 +212,30 @@ bool SingleGameScene::ArrowBegan(Touch* t, Event *e)
 }
 void SingleGameScene::ArrowMoved(Touch* t, Event*e)//射箭
 {
-	
-	
-	//待添加：：瞄准时的瞄准线
-		
+
+	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	Vec2 NowPos = t->getLocation();
+	Vec2 ModelPos = model->getPosition();
+	float dir = Rocker::getRad(ModelPos, NowPos);
+	dir = dir * 180 / 3.1415926;
+	model->setRotation(-dir);
+
 }
 void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 {
 
+	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	auto arrow = Arrow::CreateArrow("CloseNormal.png");
 	arrow->setPosition(model->getPosition());
-	arrow->StartPosition = model->getPosition();
+	arrow->StartPosition = model->getPosition()+Vec2(height,height);
 	arrow->master = model;
-	float dir = Rocker::getRad(start, t->getLocation());
-	arrow->dir = dir;
+	float NowDir = -model->getRotation();
+	while (NowDir < -180)
+	{
+		NowDir += 360;
+	}
+	arrow->dir = NowDir*3.1415926/180;
 	AllArrow.pushBack(arrow);
 	this->addChild(arrow);
 }
