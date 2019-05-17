@@ -15,6 +15,9 @@ public:
 	static Scene* CreateScene();
 	void InitAllPoint(TMXTiledMap*map);
 	void InitValue();
+	void initWeapon();//初始化武器
+private:
+
 
 	//标签系列
 	static const int MapTag = 88;//地图的标签
@@ -24,7 +27,7 @@ public:
 	static const int tag_rocker = 50;//遥杆标签
 	static const int tag_rockerBG = 60;//摇杆背景标签
 	static const int is_stop = 15;//障碍物图块的GID
-
+	static const int BloodTag = 68;
 
 
 	//储存容器
@@ -33,8 +36,8 @@ public:
 	Vector<Person*>AllPerson;//保存所有人
 	//std::set<Arrow*>se;//用来防止重复addchild
 	Map<Person*, Person*> hash_table;//确定每个人的移动朝向
-
-
+	Map<Person*, Sprite*> blood_hash;//显示每个怪物的血量
+	Vector<Arrow*>AllWeapon;//保存所有武器类型
 
 	//全局属性
 	float R;//摇杆半径
@@ -55,7 +58,7 @@ public:
 	Vec2 Two;
 	Vec2 Three;
 	Vec2 Four;
-
+	static const  int DY = 80;//血条距离人头顶的高度
 
 	//触摸回调函数系列
 	bool MoveBegan(Touch* t, Event* e);//人物移动
@@ -75,7 +78,7 @@ public:
 	inline int random(int a, int b);//随机数
 	inline double distance(Vec2 pos1, Vec2 pos2);//openGL坐标距离
 	void GetPos();//获得地图的四个角的坐标
-
+	void ShowBlood(float t);
 	//添加AI
 	void CreateMonster(float t);
 	void MoveDirect(float t);//确定每个人移动的朝向
@@ -84,7 +87,7 @@ public:
 	void Hurt(float t);//人与箭的碰撞检测
 	void Dead(float t);//人的死亡判定，资源回收
 	void InitMonster();
-	//dbeug
+	//debug
 	int counts;
 
 };

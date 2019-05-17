@@ -14,10 +14,10 @@ bool SingleGameScene::init()
 {
 	if (!Layer::init())return false;
 
-	//初始化全局属性
+	//初始化
 	auto winsize = Director::getInstance()->getWinSize();
 	this->InitValue();
-
+	this->initWeapon();
 
 	//加载地图
 	this->map = TMXTiledMap::create("Tank2.tmx");
@@ -36,11 +36,9 @@ bool SingleGameScene::init()
 	//在屏幕正中央创建主角
 	Person* model = Person::CreatePerson("person.png");
 	model->setTag(ModelTag);
-	model->blood = 1000000000;
+	model->blood = 100;
 	this->addChild(model);
 	model->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
-	//model->setRotation(385);
-	//auto xx=model->getRotation();
 	AllPerson.pushBack(model);
 
 
@@ -54,7 +52,7 @@ bool SingleGameScene::init()
 	this->addChild(rocker);
 	rocker->StartRocker();
 
-#if 0
+
 	//实现怪物补充，移动，攻击，受击检测，死亡
 	this->schedule(schedule_selector(SingleGameScene::CreateMonster), 1);
 	this->schedule(schedule_selector(SingleGameScene::MoveDirect, this));
@@ -63,7 +61,7 @@ bool SingleGameScene::init()
 	this->schedule(schedule_selector(SingleGameScene::MoveArrow, this));
 	this->schedule(schedule_selector(SingleGameScene::Hurt, this));
 	this->schedule(schedule_selector(SingleGameScene::Dead, this));
-#endif
+
 
 	//控制人物移动
 	auto MoveListen = EventListenerTouchOneByOne::create();
@@ -84,7 +82,8 @@ bool SingleGameScene::init()
 	this->schedule(schedule_selector(SingleGameScene::MoveArrow, this));
 
 
-
+	//显示血量
+	this->schedule(schedule_selector(SingleGameScene::ShowBlood, this));
 
 
 	
@@ -92,6 +91,7 @@ bool SingleGameScene::init()
 	return true;
 }
 
+//功能函数
 Vec2 SingleGameScene::exchange(Vec2 pos)
 {
 	Vec2 res;
@@ -123,6 +123,46 @@ inline double SingleGameScene::distance(Vec2 pos1, Vec2 pos2)
 	double ans = (pos1.x - pos2.x)*(pos1.x - pos2.x) + (pos1.y - pos2.y)*(pos1.y - pos2.y);
 	return sqrt(ans);
 }
+void SingleGameScene::ShowBlood(float t)
+{
+	
+
+
+	for (auto NowPerson : AllPerson)
+	{
+		Sprite* now_blood = static_cast<Sprite*>(blood_hash.at(NowPerson));
+		if (now_blood)
+		{
+			this->removeChild(now_blood);
+		}
+		Sprite* new_blood = nullptr;
+		int blood = NowPerson->blood;
+		if (blood <= 100 && blood >= 80)
+		{
+			new_blood = Sprite::create("blood_5.png");
+		}
+		else if (blood < 80 && blood >= 60)
+		{
+			new_blood = Sprite::create("blood_4.png");
+		}
+		else if (blood < 60 && blood>40)
+		{
+			new_blood = Sprite::create("blood_3.png");
+		}
+		else if (blood >= 20 && blood < 40)
+		{
+			new_blood = Sprite::create("blood_2.png");
+		}
+		else
+		{
+			new_blood = Sprite::create("blood_1.png");
+		}
+		new_blood->setPosition(Vec2(NowPerson->getPositionX(), NowPerson->getPositionY() + DY));
+		blood_hash.insert(NowPerson, new_blood);
+		this->addChild(new_blood);
+	}
+}
+//移动模块
 
 bool SingleGameScene::MoveBegan(Touch* t, Event* e)//人物移动
 {
@@ -195,6 +235,8 @@ void SingleGameScene::MovePerson(float t)
 }
 
 
+//射箭模块
+
 bool SingleGameScene::ArrowBegan(Touch* t, Event *e)
 {
 	
@@ -226,7 +268,7 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 
 	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
-	auto arrow = Arrow::CreateArrow("CloseNormal.png");
+	auto arrow = model->weapon;
 	arrow->setPosition(model->getPosition());
 	arrow->StartPosition = model->getPosition()+Vec2(height,height);
 	arrow->master = model;
@@ -269,13 +311,20 @@ void SingleGameScene::MoveArrow(float t)
 		else
 		nowArrow->setPosition(next_pos);
 	}
+	if (ToErase.size())
+	{
+		log("test");
+	}
 	for (auto x : ToErase)
 	{
 		AllArrow.eraseObject(x);
+		x->release();
 		//se.erase(x);
 	}
 }
 
+
+//AI模块
 void SingleGameScene::InitMonster()
 {
 	std::vector<Vec2>v;
@@ -483,6 +532,13 @@ void SingleGameScene::Hurt(float t)
 					if (NowPerson == model)
 					{
 						map->setPosition(map->getPositionX() - dx, map->getPositionY() - dy);
+						for (auto person : AllPerson)
+						{
+							if (person != model)
+							{
+								person->setPosition(person->getPositionX() - dx, person->getPositionY() - dy);
+							}
+						}
 					}
 					else NowPerson->setPosition(next_pos);
 				}
@@ -494,6 +550,7 @@ void SingleGameScene::Hurt(float t)
 	}
 	for (auto x : ToErase)//删除箭
 	{
+		x->release();
 		AllArrow.eraseObject(x);
 		//se.erase(x);
 	}
@@ -511,6 +568,8 @@ void SingleGameScene::Dead(float t)
 			{
 				log("Model is dead!!!");
 			}
+			auto blood = blood_hash.at(NowPerson);
+			this->removeChild(blood);
 			ToErase.pushBack(NowPerson);
 			NowPerson->removeFromParent();
 		}
@@ -521,6 +580,10 @@ void SingleGameScene::Dead(float t)
 		hash_table.erase(hash_table.find(x));//把key是x的哈希删除
 	}
 }
+
+
+
+//初始化模块
 Scene* SingleGameScene::CreateScene()
 {
 	auto scene = Scene::create();
@@ -556,4 +619,8 @@ void SingleGameScene::InitValue()
 	counts = 0;
 	NullPerson = Person::CreatePerson("person.png");
 	NullPerson->retain();
+}
+void SingleGameScene::initWeapon()
+{
+
 }
