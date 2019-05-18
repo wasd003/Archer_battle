@@ -268,7 +268,8 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 
 	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
-	auto arrow = model->weapon;
+	std::string picture = model->weapon->picture;
+	auto arrow = Arrow::CreateArrow(picture);
 	arrow->setPosition(model->getPosition());
 	arrow->StartPosition = model->getPosition()+Vec2(height,height);
 	arrow->master = model;
@@ -311,14 +312,10 @@ void SingleGameScene::MoveArrow(float t)
 		else
 		nowArrow->setPosition(next_pos);
 	}
-	if (ToErase.size())
-	{
-		log("test");
-	}
 	for (auto x : ToErase)
 	{
 		AllArrow.eraseObject(x);
-		x->release();
+		//x->release();
 		//se.erase(x);
 	}
 }
@@ -550,7 +547,7 @@ void SingleGameScene::Hurt(float t)
 	}
 	for (auto x : ToErase)//É¾³ý¼ý
 	{
-		x->release();
+		//x->release();
 		AllArrow.eraseObject(x);
 		//se.erase(x);
 	}

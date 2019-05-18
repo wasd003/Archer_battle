@@ -15,5 +15,6 @@ public:
 	Person* master;//¼ýµÄÖ÷ÈË
 	static Arrow*CreateArrow(const std::string &filename);
 	void InitArrow(const std::string &filename);
+	std::string picture;
 	CREATE_FUNC(Arrow);
 };

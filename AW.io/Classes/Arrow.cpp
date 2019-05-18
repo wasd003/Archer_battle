@@ -17,6 +17,7 @@ void Arrow:: InitArrow(const std::string &filename)
 	this->arrow_attack = 1;
 	this->arrow_size = 40;
 	this->range = 250;
+	this->picture = filename;
 	dir = 0.0;
 	this->master = nullptr;
 	speed = 10;
