@@ -16,6 +16,7 @@ public:
 	void InitAllPoint(TMXTiledMap*map);
 	void InitValue();
 	void initWeapon();//初始化武器
+	void InitMap();
 private:
 
 
@@ -29,6 +30,9 @@ private:
 	static const int is_stop = 15;//障碍物图块的GID
 	static const int BloodTag = 68;
 	static const int MenuTag = 102;
+	static const int is_blue = 8;
+	static const int is_blood = 11;
+
 
 	//储存容器
 	Vector<TDpoint*> allpoint;//保存所有点
@@ -38,6 +42,8 @@ private:
 	Map<Person*, Person*> hash_table;//确定每个人的移动朝向
 	Map<Person*, Sprite*> blood_hash;//显示每个怪物的血量
 	Vector<Arrow*>AllWeapon;//保存所有武器类型
+	std::set<Vec2> se;//保存所有被吃掉的星星和心
+	std::set<Vec2> StopCheck;
 
 	//属性与游戏参数
 	float R;//摇杆半径
@@ -47,6 +53,7 @@ private:
 	TMXTiledMap* map;//地图
 	TMXLayer* stop; //障碍层
 	TMXLayer* background;//背景层
+	TMXLayer* star;
 	int height;//从人物的中心点出发到达矩形的四条边的距离
 	int MonsterNumber;//维持局面中至少的怪物个数
 	int low;//随机产生怪物的横纵坐标最小值
@@ -97,5 +104,6 @@ private:
 	void InitMonster();
 	//debug
 	int counts;
-
+	Vector<Sprite*>debug;
+	
 };

@@ -7,10 +7,7 @@
 #include <ctime>
 #include<cstring>
 USING_NS_CC;
-inline int SingleGameScene::random(int a, int b)
-{
-	return (((double)rand() / RAND_MAX) * (b - a) + a);
-}
+
 bool SingleGameScene::init()
 {
 	if (!Layer::init())return false;
@@ -23,16 +20,17 @@ bool SingleGameScene::init()
 	//加载地图
 	this->map = TMXTiledMap::create("Tank2.tmx");
 	map->setTag(MapTag);
-	map->setPosition(Vec2(-1298.771362 ,-701.067322));
+	map->setPosition(Vec2(224,-2074));
 	this->addChild(map,-1);
 	GetPos();
-
+	InitMap();
 	//加载障碍层和背景层
 	stop = map->getLayer("stop");
 	stop->retain();
 	background = map->getLayer("background");
 	background->retain();
-
+	star = map->getLayer("star");
+	star->retain();
 
 	//在屏幕正中央创建主角
 	auto model = Person::CreatePerson("person.png");
@@ -95,21 +93,20 @@ bool SingleGameScene::init()
 //功能函数
 Vec2 SingleGameScene::exchange(Vec2 pos)
 {
-	Vec2 res;
-	Vec2 anchor = map->getPosition();//得到的是左下角的坐标 woc。不是中心点的坐标
-	int anchor_y = map->getMapSize().height ;
-	int anchor_x = 0;
-	int dir_x = (pos.x - anchor.x)/map->getTileSize().width;
-	int dir_y = (anchor.y - pos.y)/map->getTileSize().height;
-	res.y = anchor_y + dir_y;
-	res.x = anchor_x + dir_x;
-	return res;
+
+	Vec2 anchor = map->getPosition();//得到的是左下角的坐标 
+	int height = 3000;
+	float delta_y = height + anchor.y - pos.y;
+	float delta_x = pos.x - anchor.x;
+	int row = delta_y / 30;
+	int col = delta_x /30;
+
+	return Vec2(row, col);
 }
 bool SingleGameScene::check(Vec2 pos)
 {
 	Vec2 tile_pos = exchange(pos);
-	int gid = stop->getTileGIDAt(tile_pos);
-	return gid != is_stop;
+	return !StopCheck.count(tile_pos);
 }
 void SingleGameScene::GetPos()
 {
@@ -218,6 +215,12 @@ void SingleGameScene::ArrowCopy(Arrow* first,Arrow* second)
 	first->arrow_attack = second->arrow_attack;
 	first->picture = second->picture;
 }
+inline int SingleGameScene::random(int a, int b)
+{
+	return (((double)rand() / RAND_MAX) * (b - a) + a);
+}
+
+
 
 //移动模块
 
@@ -243,23 +246,49 @@ void SingleGameScene::MoveEnded(Touch* t, Event *e)
 }
 void SingleGameScene::MovePerson(float t)
 {
-	//log("%f %f", map->getPositionX(), map->getPositionY());
+	
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	float dir = Rocker::getRad(rockerBG_Position, current_point);
 	if (rockerBG_Position == current_point)return;
 	float dx = model->speed * cos(dir);
 	float dy = model->speed * sin(dir);
-	Vec2 next_pos = Vec2(model->getPositionX() +height*(1+cos(dir))+ dx, model->getPositionY() +height*(1+sin(dir))+ dy);//人物下一刻即将移动到的位置  将人物视为一个圆柱体
-	Vec2 next_pos_right= Vec2(model->getPositionX() + height * 2 + dx, model->getPositionY() + height ); 
+	Vec2 NowPos = exchange(Vec2(model->getPositionX()+height,model->getPositionY()+height));//获得当前人物所处的tile坐标
+#if 0
+	int gid = star->getTileGIDAt(NowPos);
+	if (star->getTileGIDAt(NowPos) == is_blue&&!se.count(NowPos))
+	{
+		model->blue += 5;
+		Sprite* tile = star->getTileAt(NowPos);
+		tile->setVisible(false);
+		se.insert(NowPos);
+		log("%d", model->blue);
+	}
+	if (star->getTileGIDAt(NowPos) == is_blood && !se.count(NowPos))
+	{
+		model->blood += 5;
+		if (model->blood > 100)
+		{
+			model->blood = 100;
+		}
+		Sprite* tile = star->getTileAt(NowPos);
+		tile->setVisible(false);
+		se.insert(NowPos);
+		log("%d", model->blood);
+	}
+#endif
+	Vec2 next_pos = Vec2(model->getPositionX() +height*(cos(dir)), model->getPositionY() +height*(sin(dir)));//人物下一刻即将移动到的位置  将人物视为一个圆柱体
+
+	Vec2 next_pos_right= Vec2(model->getPositionX() + height , model->getPositionY()  ); 
 	if (dx < 0)
 	{
-		next_pos_right = Vec2(model->getPositionX()  + dx, model->getPositionY() + height);
+		next_pos_right = Vec2(model->getPositionX() -height, model->getPositionY() );
 	}
-	Vec2 next_pos_up= Vec2(model->getPositionX() + height, model->getPositionY() + height * 2 + dy);
+	Vec2 next_pos_up= Vec2(model->getPositionX() , model->getPositionY() + height );
 	if (dy < 0)
 	{
-		next_pos_up = Vec2(model->getPositionX() + height, model->getPositionY()  + dy);
+		next_pos_up = Vec2(model->getPositionX(), model->getPositionY() -height);
 	}
+	
 	if (check(next_pos))//碰撞检测
 	{
 		map->setPosition(Vec2(map->getPositionX() - dx, map->getPositionY() - dy));
@@ -491,10 +520,6 @@ void SingleGameScene::MoveAllPerson(float t)
 	auto model = getChildByTag(ModelTag);
 	int dx[4] = { -1,0,1,0 };
 	int dy[4] = { 0,1,0,-1 };
-	if (AllPerson.size() == 3)
-	{
-		log("debug");
-	}
 	for (auto NowPerson:AllPerson)
 	{
 		if (NowPerson == model)continue;
@@ -506,15 +531,18 @@ void SingleGameScene::MoveAllPerson(float t)
 				log("debug");
 			}
 			float dir = Rocker::getRad(NowPerson->getPosition(), direct->getPosition());
-			Vec2 next_pos = Vec2(NowPerson->getPositionX() + NowPerson->speed*cos(dir), NowPerson->getPositionY() + NowPerson->speed*sin(dir));
+			float dx = NowPerson->speed * cos(dir);
+			float dy = NowPerson->speed * sin(dir);
+			Vec2 next_pos = Vec2(NowPerson->getPositionX() + height*cos(dir), NowPerson->getPositionY() + height*sin(dir));
 			auto dis = distance(NowPerson->getPosition(), direct->getPosition());
 			if (dis < min_attack_area)
 			{
-				next_pos= Vec2(NowPerson->getPositionX() - NowPerson->speed*cos(dir), NowPerson->getPositionY() - NowPerson->speed*sin(dir));
+				next_pos= Vec2(NowPerson->getPositionX() - height*cos(dir), NowPerson->getPositionY() - height*sin(dir));
+				dx = -dx, dy = -dy;
 			}
 			if (check(next_pos))
 			{
-				NowPerson->setPosition(next_pos);
+				NowPerson->setPosition(Vec2(NowPerson->getPositionX()+dx,NowPerson->getPositionY()+dy));
 			}
 /*
 			else
@@ -686,7 +714,7 @@ void SingleGameScene::InitValue()
 	this->rockerBG_Position = Vec2(100, 100);
 	this->current_point = rockerBG_Position;
 	this->MonsterNumber = 5;
-	height = 50;
+	height = 20;
 	attack_area = 500;
 	min_attack_area = 250;
 	counts = 0;
@@ -728,4 +756,32 @@ void SingleGameScene::initWeapon()
 	laser->retain();
 	AllWeapon.pushBack(laser);
 
+}
+void SingleGameScene::InitMap()
+{
+	for (int i = 3; i <= 90; i++)
+	{
+		StopCheck.insert(Vec2(3, i));
+	}
+	for (int i = 3; i <= 96; i++)
+	{
+		StopCheck.insert(Vec2(i, 3));
+	}
+	for (int i = 3; i <= 96; i++)
+	{
+		StopCheck.insert(Vec2(96, i));
+	}
+	for (int i = 3; i <= 96; i++)
+	{
+		StopCheck.insert(Vec2(i, 90));
+	}
+	for (int i = 20; i <= 70; i++)
+	{
+		StopCheck.insert(Vec2(85, i));
+	}
+	for (int i = 80; i <= 90; i++)
+	{
+		StopCheck.insert(Vec2(i, 32));
+		StopCheck.insert(Vec2(i, 63));
+	}
 }
