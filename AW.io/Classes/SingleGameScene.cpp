@@ -5,6 +5,7 @@
 #include "Arrow.h"
 #include "Rocker.h"
 #include <ctime>
+#include<cstring>
 USING_NS_CC;
 inline int SingleGameScene::random(int a, int b)
 {
@@ -34,7 +35,7 @@ bool SingleGameScene::init()
 
 
 	//在屏幕正中央创建主角
-	Person* model = Person::CreatePerson("person.png");
+	auto model = Person::CreatePerson("person.png");
 	model->setTag(ModelTag);
 	model->blood = 100;
 	this->addChild(model);
@@ -84,8 +85,8 @@ bool SingleGameScene::init()
 
 	//显示血量
 	this->schedule(schedule_selector(SingleGameScene::ShowBlood, this));
-
-
+	this->schedule(schedule_selector(SingleGameScene::ChangeWeapon, this));
+	//this->schedule(schedule_selector(SingleGameScene::ChangeWeapon), 1);
 	
 
 	return true;
@@ -145,11 +146,11 @@ void SingleGameScene::ShowBlood(float t)
 		{
 			new_blood = Sprite::create("blood_4.png");
 		}
-		else if (blood < 60 && blood>40)
+		else if (blood < 60 && blood>=40)
 		{
 			new_blood = Sprite::create("blood_3.png");
 		}
-		else if (blood >= 20 && blood < 40)
+		else if (blood < 40 && blood >= 20)
 		{
 			new_blood = Sprite::create("blood_2.png");
 		}
@@ -162,6 +163,62 @@ void SingleGameScene::ShowBlood(float t)
 		this->addChild(new_blood);
 	}
 }
+void SingleGameScene::ChangeWeapon(float t)
+{
+	srand(time(NULL));
+	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (model->blue < 100)
+	{
+		//model->blue += 5;
+		//log("blue:%d", model->blue);
+		return;
+	}
+	Vector<MenuItem*>v;
+	for (int i=1; i <= 3; i++)
+	{
+
+		int num = random(0, AllWeapon.size() );
+		Vector<Arrow*>::iterator it = AllWeapon.begin();
+		while (num--)
+		{
+			it++;
+		}
+		auto menu = MenuItemImage::create((*it)->picture, (*it)->picture, CC_CALLBACK_1(SingleGameScene::MenuCallBack, this));
+		if (i == 1)
+		{
+			menu->setPosition(Vec2(model->getPositionX() - 600, model->getPositionY() - 350));
+			menu->setTag(1);
+			ArrowCopy(NowWeapon_1, *it);
+		}
+		else if (i == 2)
+		{
+			menu->setPosition(Vec2(model->getPositionX()-500, model->getPositionY() - 350));
+			menu->setTag(2);
+			ArrowCopy(NowWeapon_2, *it);
+		}
+		else
+		{
+			menu->setPosition(Vec2(model->getPositionX() -400, model->getPositionY() - 350));
+			menu->setTag(3);
+			ArrowCopy(NowWeapon_3, *it);
+		}
+		v.pushBack(menu);
+	}
+	
+	auto M = Menu::createWithArray(v);
+	M->setTag(MenuTag);
+	this->addChild(M);
+	model->blue = 0;
+
+}
+void SingleGameScene::ArrowCopy(Arrow* first,Arrow* second)
+{
+	first->speed = second->speed;
+	first->range = second->range;
+	first->arrow_attack = second->arrow_attack;
+	first->picture = second->picture;
+}
+
 //移动模块
 
 bool SingleGameScene::MoveBegan(Touch* t, Event* e)//人物移动
@@ -269,7 +326,12 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
 	std::string picture = model->weapon->picture;
+	//创建一只箭，用人物的weapon对箭进行赋值
 	auto arrow = Arrow::CreateArrow(picture);
+	arrow->arrow_attack = model->weapon->arrow_attack;
+	arrow->speed = model->weapon->speed;
+	arrow->range = model->weapon->range;
+	arrow->arrow_size = model->weapon->arrow_size;
 	arrow->setPosition(model->getPosition());
 	arrow->StartPosition = model->getPosition()+Vec2(height,height);
 	arrow->master = model;
@@ -287,13 +349,6 @@ void SingleGameScene::MoveArrow(float t)
 	Vector<Arrow*>ToErase;
 	for (auto nowArrow : AllArrow)
 	{
-/*
-		if (!se.count(nowArrow))//添加箭
-		{
-			this->addChild(nowArrow);
-			se.insert(nowArrow);
-		}
-*/
 		double dis = distance(nowArrow->getPosition(), nowArrow->StartPosition);
 		if (dis >= nowArrow->range)
 		{
@@ -315,8 +370,6 @@ void SingleGameScene::MoveArrow(float t)
 	for (auto x : ToErase)
 	{
 		AllArrow.eraseObject(x);
-		//x->release();
-		//se.erase(x);
 	}
 }
 
@@ -519,8 +572,9 @@ void SingleGameScene::Hurt(float t)
 			if (NowPerson_pos.intersectsRect(NowArrow_pos))//箭射中人
 			{
 				//log("%d",model->blood);
+			
 				if (NowArrow->master == NowPerson)continue;
-				NowPerson->blood -= NowArrow->arrow_attack;//掉血
+				NowPerson->blood -= NowArrow->arrow_attack*NowArrow->master->attack;//掉血
 				float dx = NowArrow->speed*cos(NowArrow->dir);//受击后产生位移
 				float dy = NowArrow->speed*sin(NowArrow->dir);
 				Vec2 next_pos = Vec2(NowPerson->getPositionX() + dx, NowPerson->getPositionY() + dy);
@@ -540,16 +594,14 @@ void SingleGameScene::Hurt(float t)
 					else NowPerson->setPosition(next_pos);
 				}
 				
-				//ToErase.pushBack(NowArrow);
-				//NowArrow->removeFromParent();
+				ToErase.pushBack(NowArrow);
+				NowArrow->removeFromParent();
 			}
 		}
 	}
 	for (auto x : ToErase)//删除箭
 	{
-		//x->release();
 		AllArrow.eraseObject(x);
-		//se.erase(x);
 	}
 }
 void SingleGameScene::Dead(float t)
@@ -578,7 +630,31 @@ void SingleGameScene::Dead(float t)
 	}
 }
 
+//物品模块
 
+void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
+{
+
+	auto NowItem = static_cast<MenuItem*>(pSender);//得到当前点击的菜单项
+	int tag = NowItem->getTag();
+	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	switch (tag)
+	{
+	case 1:
+		ArrowCopy(model->weapon, NowWeapon_1);
+		break;
+	case 2:
+		ArrowCopy(model->weapon, NowWeapon_2);
+		break;
+	case 3:
+		ArrowCopy(model->weapon, NowWeapon_3);
+		break;
+	}
+	Menu * M = static_cast<Menu*> (getChildByTag(MenuTag));
+	M->removeFromParent();
+	log("debug");
+
+}
 
 //初始化模块
 Scene* SingleGameScene::CreateScene()
@@ -616,8 +692,40 @@ void SingleGameScene::InitValue()
 	counts = 0;
 	NullPerson = Person::CreatePerson("person.png");
 	NullPerson->retain();
+	NowWeapon_1 = Arrow::CreateArrow("CloseNormal.png");
+	NowWeapon_1->retain();
+	NowWeapon_2 = Arrow::CreateArrow("CloseNormal.png");
+	NowWeapon_2->retain();
+	NowWeapon_3 = Arrow::CreateArrow("CloseNormal.png");
+	NowWeapon_3->retain();
 }
 void SingleGameScene::initWeapon()
 {
+	//斧子
+	auto ax = Arrow::CreateArrow("ax.png");
+	ax->arrow_attack = 20;
+	ax->speed = 8;
+	ax->range = 200;
+	ax->picture = "ax.png";
+	ax->retain();
+	AllWeapon.pushBack(ax);
+
+	//火焰
+	auto fire = Arrow::CreateArrow("fire.png");
+	fire->arrow_attack = 15;
+	fire->speed = 20;
+	fire->range = 200;
+	fire->picture = "fire.png";
+	fire->retain();
+	AllWeapon.pushBack(fire);
+
+	//激光
+	auto laser = Arrow::CreateArrow("laser.png");
+	laser->arrow_attack = 30;
+	laser->speed = 5;
+	laser->range = 50;
+	laser->picture = "laser.png";
+	laser->retain();
+	AllWeapon.pushBack(laser);
 
 }

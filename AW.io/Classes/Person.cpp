@@ -23,8 +23,4 @@ void Person::InitPerson(const std::string &filename)
 	speed = 3;
 	weapon = Arrow::CreateArrow("CloseNormal.png");
 	weapon->retain();
-	if (this->weapon)
-	{
-		this->weapon->arrow_attack = 10;
-	}
 }

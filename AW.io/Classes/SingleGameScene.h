@@ -28,7 +28,7 @@ private:
 	static const int tag_rockerBG = 60;//摇杆背景标签
 	static const int is_stop = 15;//障碍物图块的GID
 	static const int BloodTag = 68;
-
+	static const int MenuTag = 102;
 
 	//储存容器
 	Vector<TDpoint*> allpoint;//保存所有点
@@ -39,7 +39,7 @@ private:
 	Map<Person*, Sprite*> blood_hash;//显示每个怪物的血量
 	Vector<Arrow*>AllWeapon;//保存所有武器类型
 
-	//全局属性
+	//属性与游戏参数
 	float R;//摇杆半径
 	Vec2 current_point;//当前触摸点  用来辅助人物移动
 	Vec2 rockerBG_Position;//摇杆中心点的坐标
@@ -54,6 +54,9 @@ private:
 	int attack_area;//方圆attack_area内，如果有人，会默认朝该人移动
 	int min_attack_area;//怪物之间距离允许的最小值
 	Person* NullPerson;
+	Arrow* NowWeapon_1;
+	Arrow* NowWeapon_2;
+	Arrow* NowWeapon_3;
 	Vec2 One;//四个象限的地图角的坐标
 	Vec2 Two;
 	Vec2 Three;
@@ -79,6 +82,11 @@ private:
 	inline double distance(Vec2 pos1, Vec2 pos2);//openGL坐标距离
 	void GetPos();//获得地图的四个角的坐标
 	void ShowBlood(float t);
+	void ChangeWeapon(float t);//改变武器
+	void MenuCallBack(cocos2d::Ref*pSender);
+	void ArrowCopy(Arrow* first, Arrow* second);//箭的深拷贝
+
+
 	//添加AI
 	void CreateMonster(float t);
 	void MoveDirect(float t);//确定每个人移动的朝向
