@@ -654,7 +654,12 @@ void SingleGameScene::Dead(float t)
 	for (auto x : ToErase)
 	{
 		AllPerson.eraseObject(x);
-		hash_table.erase(hash_table.find(x));//把key是x的哈希删除
+		auto res = hash_table.find(x);
+		if (res != hash_table.cend())
+		{
+			hash_table.erase(hash_table.find(x));//把key是x的哈希删除
+		}
+		
 	}
 }
 
