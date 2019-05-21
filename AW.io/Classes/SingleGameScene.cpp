@@ -6,6 +6,7 @@
 #include "Rocker.h"
 #include <ctime>
 #include<cstring>
+#include<string>
 USING_NS_CC;
 
 bool SingleGameScene::init()
@@ -16,35 +17,35 @@ bool SingleGameScene::init()
 	auto winsize = Director::getInstance()->getWinSize();
 	this->InitValue();
 	this->initWeapon();
+	
 
 	//加载地图
 	this->map = TMXTiledMap::create("Tank2.tmx");
-	map->setTag(MapTag);
-	map->setPosition(Vec2(224,-2074));
-	this->addChild(map,-1);
+	map->setPosition(Vec2(224, -2074));
+	this->addChild(map, -1);
 	GetPos();
 	InitMap();
+	
 	//加载障碍层和背景层
+	/*
 	stop = map->getLayer("stop");
 	stop->retain();
 	background = map->getLayer("background");
 	background->retain();
 	star = map->getLayer("star");
 	star->retain();
+	*/
 
-	//在屏幕正中央创建主角
+	//创建主角
 	auto model = Person::CreatePerson("person.png");
 	model->setTag(ModelTag);
-	model->blood = 100;
 	this->addChild(model);
 	model->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
 	AllPerson.pushBack(model);
-
-
 	//创建怪物
 	InitMonster();
-
-
+	//创建星星和心
+	InitHeartStar();
 	//设置摇杆
 	auto rocker = Rocker::create("CloseSelected.png","rr.png", rockerBG_Position);
 	rocker->setTag(RockerTag);
@@ -61,6 +62,8 @@ bool SingleGameScene::init()
 	this->schedule(schedule_selector(SingleGameScene::Hurt, this));
 	this->schedule(schedule_selector(SingleGameScene::Dead, this));
 
+	//星星和心的补充
+	this->schedule(schedule_selector(SingleGameScene::SupplyHeartStar, this));
 
 	//控制人物移动
 	auto MoveListen = EventListenerTouchOneByOne::create();
@@ -110,103 +113,23 @@ bool SingleGameScene::check(Vec2 pos)
 }
 void SingleGameScene::GetPos()
 {
+
 	Three = map->getPosition();
-	Three.x += 200, Three.y +=200;
-	Two = Three + Vec2(0, 2400);
-	One = Two + Vec2(2400, 0);
-	Four = Three + Vec2(2400,0);
+	Three.x += 500, Three.y +=500;
+	Two = Three + Vec2(0, 2000);
+	One = Two + Vec2(2000, 2000);
+	Four = Three + Vec2(2000,0);
 }
 inline double SingleGameScene::distance(Vec2 pos1, Vec2 pos2)
 {
 	double ans = (pos1.x - pos2.x)*(pos1.x - pos2.x) + (pos1.y - pos2.y)*(pos1.y - pos2.y);
 	return sqrt(ans);
 }
-void SingleGameScene::ShowBlood(float t)
+bool SingleGameScene::IsInBound(Vec2 pos)
 {
+	Vec2 anchor = map->getPosition();
+	return (pos.x >= anchor.x + 300 && pos.x <= anchor.x + 2700 && pos.y >= anchor.y + 300 && pos.y <= anchor.y + 2700);
 	
-
-
-	for (auto NowPerson : AllPerson)
-	{
-		Sprite* now_blood = static_cast<Sprite*>(blood_hash.at(NowPerson));
-		if (now_blood)
-		{
-			this->removeChild(now_blood);
-		}
-		Sprite* new_blood = nullptr;
-		int blood = NowPerson->blood;
-		if (blood <= 100 && blood >= 80)
-		{
-			new_blood = Sprite::create("blood_5.png");
-		}
-		else if (blood < 80 && blood >= 60)
-		{
-			new_blood = Sprite::create("blood_4.png");
-		}
-		else if (blood < 60 && blood>=40)
-		{
-			new_blood = Sprite::create("blood_3.png");
-		}
-		else if (blood < 40 && blood >= 20)
-		{
-			new_blood = Sprite::create("blood_2.png");
-		}
-		else
-		{
-			new_blood = Sprite::create("blood_1.png");
-		}
-		new_blood->setPosition(Vec2(NowPerson->getPositionX(), NowPerson->getPositionY() + DY));
-		blood_hash.insert(NowPerson, new_blood);
-		this->addChild(new_blood);
-	}
-}
-void SingleGameScene::ChangeWeapon(float t)
-{
-	srand(time(NULL));
-	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
-	if (model->blue < 100)
-	{
-		//model->blue += 5;
-		//log("blue:%d", model->blue);
-		return;
-	}
-	Vector<MenuItem*>v;
-	for (int i=1; i <= 3; i++)
-	{
-
-		int num = random(0, AllWeapon.size() );
-		Vector<Arrow*>::iterator it = AllWeapon.begin();
-		while (num--)
-		{
-			it++;
-		}
-		auto menu = MenuItemImage::create((*it)->picture, (*it)->picture, CC_CALLBACK_1(SingleGameScene::MenuCallBack, this));
-		if (i == 1)
-		{
-			menu->setPosition(Vec2(model->getPositionX() - 600, model->getPositionY() - 350));
-			menu->setTag(1);
-			ArrowCopy(NowWeapon_1, *it);
-		}
-		else if (i == 2)
-		{
-			menu->setPosition(Vec2(model->getPositionX()-500, model->getPositionY() - 350));
-			menu->setTag(2);
-			ArrowCopy(NowWeapon_2, *it);
-		}
-		else
-		{
-			menu->setPosition(Vec2(model->getPositionX() -400, model->getPositionY() - 350));
-			menu->setTag(3);
-			ArrowCopy(NowWeapon_3, *it);
-		}
-		v.pushBack(menu);
-	}
-	
-	auto M = Menu::createWithArray(v);
-	M->setTag(MenuTag);
-	this->addChild(M);
-	model->blue = 0;
-
 }
 void SingleGameScene::ArrowCopy(Arrow* first,Arrow* second)
 {
@@ -248,36 +171,42 @@ void SingleGameScene::MovePerson(float t)
 {
 	
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	Vector<Sprite*>ToEraseStar,	ToEraseHeart;
 	float dir = Rocker::getRad(rockerBG_Position, current_point);
 	if (rockerBG_Position == current_point)return;
 	float dx = model->speed * cos(dir);
 	float dy = model->speed * sin(dir);
 	Vec2 NowPos = exchange(Vec2(model->getPositionX()+height,model->getPositionY()+height));//获得当前人物所处的tile坐标
-#if 0
-	int gid = star->getTileGIDAt(NowPos);
-	if (star->getTileGIDAt(NowPos) == is_blue&&!se.count(NowPos))
-	{
-		model->blue += 5;
-		Sprite* tile = star->getTileAt(NowPos);
-		tile->setVisible(false);
-		se.insert(NowPos);
-		log("%d", model->blue);
-	}
-	if (star->getTileGIDAt(NowPos) == is_blood && !se.count(NowPos))
-	{
-		model->blood += 5;
-		if (model->blood > 100)
-		{
-			model->blood = 100;
-		}
-		Sprite* tile = star->getTileAt(NowPos);
-		tile->setVisible(false);
-		se.insert(NowPos);
-		log("%d", model->blood);
-	}
-#endif
+	
 	Vec2 next_pos = Vec2(model->getPositionX() +height*(cos(dir)), model->getPositionY() +height*(sin(dir)));//人物下一刻即将移动到的位置  将人物视为一个圆柱体
-
+	for (auto NowStar : AllStar)
+	{
+		if (distance(NowStar->getPosition(), model->getPosition()) < 30)
+		{
+			ToEraseStar.pushBack(NowStar);
+			model->blue += 5;
+			LabelMagic->setString(String::createWithFormat("Magic:%d", model->blue)->_string);
+			this->removeChild(NowStar);
+		}
+	}
+	for (auto NowHeart : AllHeart)
+	{
+		if (distance(NowHeart->getPosition(), model->getPosition()) < 30)
+		{
+			ToEraseHeart.pushBack(NowHeart);
+			model->blood += 5;
+			if (model->blood > 100)model->blood = 100;
+			this->removeChild(NowHeart);
+		}
+	}
+	for (auto x : ToEraseStar)
+	{
+		AllStar.eraseObject(x);
+	}
+	for (auto x : ToEraseHeart)
+	{
+		AllHeart.eraseObject(x);
+	}
 	Vec2 next_pos_right= Vec2(model->getPositionX() + height , model->getPositionY()  ); 
 	if (dx < 0)
 	{
@@ -288,35 +217,34 @@ void SingleGameScene::MovePerson(float t)
 	{
 		next_pos_up = Vec2(model->getPositionX(), model->getPositionY() -height);
 	}
-	
+	Vec2 SetPos = Vec2(0, 0);
 	if (check(next_pos))//碰撞检测
 	{
-		map->setPosition(Vec2(map->getPositionX() - dx, map->getPositionY() - dy));
-		for (auto NowPerson : AllPerson)
-		{
-			if (NowPerson == model)continue;
-			NowPerson->setPosition(Vec2(NowPerson->getPositionX() - dx, NowPerson->getPositionY() - dy));
-		}
+		SetPos = Vec2(-dx,-dy);
 	}
 	else if(check(next_pos_right))
 	{
-		map->setPositionX(map->getPositionX() - dx);
-		for (auto NowPerson : AllPerson)
-		{
-			if (NowPerson == model)continue;
-			NowPerson->setPositionX(NowPerson->getPositionX() - dx);
-		}
+		SetPos = Vec2(-dx, 0);
 	}
 	else if (check(next_pos_up))
 	{
-		map->setPositionY(map->getPositionY() - dy);
-		for (auto NowPerson : AllPerson)
-		{
-			if (NowPerson == model)continue;
-			NowPerson->setPositionY(NowPerson->getPositionY() - dy);
-		}
+		SetPos = Vec2(0, -dy);
 	}
-
+	//地图上其他精灵跟随移动
+	map->setPosition(Vec2(map->getPositionX() +SetPos.x, map->getPositionY()+ SetPos.y));
+	for (auto NowPerson : AllPerson)
+	{
+		if (NowPerson == model)continue;
+		NowPerson->setPosition(Vec2(NowPerson->getPositionX() + SetPos.x, NowPerson->getPositionY() + SetPos.y));
+	}
+	for (auto NowStar : AllStar)
+	{
+		NowStar->setPosition(Vec2(NowStar->getPositionX() + SetPos.x, NowStar->getPositionY() + SetPos.y));
+	}
+	for (auto NowHeart : AllHeart)
+	{
+		NowHeart->setPosition(Vec2(NowHeart->getPositionX() + SetPos.x, NowHeart->getPositionY() + SetPos.y));
+	}
 
 }
 
@@ -526,10 +454,6 @@ void SingleGameScene::MoveAllPerson(float t)
 		if (hash_table.at(NowPerson)!=NullPerson)
 		{
 			auto direct = hash_table.at(NowPerson);
-			if(NowPerson->getPosition()==direct->getPosition())
-			{
-				log("debug");
-			}
 			float dir = Rocker::getRad(NowPerson->getPosition(), direct->getPosition());
 			float dx = NowPerson->speed * cos(dir);
 			float dy = NowPerson->speed * sin(dir);
@@ -602,6 +526,11 @@ void SingleGameScene::Hurt(float t)
 				//log("%d",model->blood);
 			
 				if (NowArrow->master == NowPerson)continue;
+				if (NowArrow->master == model)
+				{
+					score++;
+					LabelScore->setString(String::createWithFormat("Score:%d", score)->_string);
+				}
 				NowPerson->blood -= NowArrow->arrow_attack*NowArrow->master->attack;//掉血
 				float dx = NowArrow->speed*cos(NowArrow->dir);//受击后产生位移
 				float dy = NowArrow->speed*sin(NowArrow->dir);
@@ -688,6 +617,151 @@ void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
 	log("debug");
 
 }
+void SingleGameScene::ShowBlood(float t)
+{
+
+
+
+	for (auto NowPerson : AllPerson)
+	{
+		Sprite* now_blood = static_cast<Sprite*>(blood_hash.at(NowPerson));
+		if (now_blood)
+		{
+			this->removeChild(now_blood);
+		}
+		Sprite* new_blood = nullptr;
+		int blood = NowPerson->blood;
+		if (blood <= 100 && blood >= 80)
+		{
+			new_blood = Sprite::create("blood_5.png");
+		}
+		else if (blood < 80 && blood >= 60)
+		{
+			new_blood = Sprite::create("blood_4.png");
+		}
+		else if (blood < 60 && blood >= 40)
+		{
+			new_blood = Sprite::create("blood_3.png");
+		}
+		else if (blood < 40 && blood >= 20)
+		{
+			new_blood = Sprite::create("blood_2.png");
+		}
+		else
+		{
+			new_blood = Sprite::create("blood_1.png");
+		}
+		new_blood->setPosition(Vec2(NowPerson->getPositionX(), NowPerson->getPositionY() + DY));
+		blood_hash.insert(NowPerson, new_blood);
+		this->addChild(new_blood);
+	}
+}
+void SingleGameScene::ChangeWeapon(float t)
+{
+	srand(time(NULL));
+	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		log("wtf");
+	}
+	if (model->blue < 100)
+	{
+		//model->blue += 5;
+		//log("blue:%d", model->blue);
+		return;
+	}
+	Vector<MenuItem*>v;
+	for (int i = 1; i <= 3; i++)
+	{
+
+		int num = random(0, AllWeapon.size());
+		Vector<Arrow*>::iterator it = AllWeapon.begin();
+		while (num--)
+		{
+			it++;
+		}
+		auto menu = MenuItemImage::create((*it)->picture, (*it)->picture, CC_CALLBACK_1(SingleGameScene::MenuCallBack, this));
+		if (i == 1)
+		{
+			menu->setPosition(Vec2(model->getPositionX() - 600, model->getPositionY() - 350));
+			menu->setTag(1);
+			ArrowCopy(NowWeapon_1, *it);
+		}
+		else if (i == 2)
+		{
+			menu->setPosition(Vec2(model->getPositionX() - 500, model->getPositionY() - 350));
+			menu->setTag(2);
+			ArrowCopy(NowWeapon_2, *it);
+		}
+		else
+		{
+			menu->setPosition(Vec2(model->getPositionX() - 400, model->getPositionY() - 350));
+			menu->setTag(3);
+			ArrowCopy(NowWeapon_3, *it);
+		}
+		v.pushBack(menu);
+	}
+
+	auto M = Menu::createWithArray(v);
+	M->setTag(MenuTag);
+	this->addChild(M);
+	model->blue = 0;
+
+}
+void SingleGameScene::InitHeartStar()
+{
+	//创建25个星星和25个心，每一队五个
+	for (int i = 1; i <= 40; i++)
+	{
+		CreateHeartStar("heart.png");
+		CreateHeartStar("star.png");
+	}
+	
+}
+void SingleGameScene::CreateHeartStar(const std::string &filename)
+{
+	srand(counts++);
+	int dx[2] = { 30,0 };
+	int dy[2] = { 0,30};
+	int star_dir = random(0,2);
+	
+	GetPos();
+	Vec2 anchor = map->getPosition();
+	Vec2 star_start = Vec2(random(Two.x,One.x), random(Three.y,One.y));
+	for (int k = 0; k < 5; k++)
+	{
+		Sprite* sprite = Sprite::create(filename);
+		float x = star_start.x + dx[star_dir] * k;
+		float y = star_start.y + dy[star_dir] * k;
+		sprite->setPosition(Vec2(x, y));
+		if (check(Vec2(x, y))&& IsInBound(Vec2(x, y)))
+		{
+
+			this->addChild(sprite);
+			if (filename == "star.png")
+			{
+				AllStar.pushBack(sprite);
+			}
+			else AllHeart.pushBack(sprite);
+		}
+		bool bound=IsInBound(Vec2(x, y));
+		bool is_check=check(Vec2(x, y));
+	}
+}
+void SingleGameScene::SupplyHeartStar(float t)
+{
+
+	if (AllHeart.size() > 170 && AllStar.size() > 170)return;
+	if (AllHeart.size() < 170)
+	{
+		CreateHeartStar("heart.png");
+	}
+	if (AllStar.size() < 170)
+	{
+		CreateHeartStar("star.png");
+	}
+}
+
 
 //初始化模块
 Scene* SingleGameScene::CreateScene()
@@ -697,6 +771,7 @@ Scene* SingleGameScene::CreateScene()
 	scene->addChild(layer);
 	return scene;
 }
+/*
 void SingleGameScene::InitAllPoint(TMXTiledMap*map)
 {
 	Vec2 map_pos = map->getPosition();
@@ -714,15 +789,25 @@ void SingleGameScene::InitAllPoint(TMXTiledMap*map)
 
 	
 }
+*/
 void SingleGameScene::InitValue()
 {
 	this->rockerBG_Position = Vec2(100, 100);
 	this->current_point = rockerBG_Position;
 	this->MonsterNumber = 5;
+	this->score = 0;
 	height = 20;
 	attack_area = 500;
 	min_attack_area = 250;
 	counts = 0;
+	LabelScore= Label::createWithTTF("Score:0", "fonts/Marker Felt.ttf", 32);
+	LabelScore->setPosition(Vec2(100, 400));
+	LabelScore->setColor(Color3B::RED);
+	LabelMagic = Label::createWithTTF("Magic:0", "fonts/Marker Felt.ttf", 32);
+	LabelMagic->setPosition(Vec2(100, 350));
+	LabelMagic->setColor(Color3B::RED);
+	this->addChild(LabelScore);
+	this->addChild(LabelMagic);
 	NullPerson = Person::CreatePerson("person.png");
 	NullPerson->retain();
 	NowWeapon_1 = Arrow::CreateArrow("CloseNormal.png");

@@ -74,6 +74,7 @@ void Rocker::onTouchEnded(Touch* t, Event *e)
 }
 float Rocker::getRad(Vec2 pos1, Vec2 pos2)
 {
+	if (pos1 == pos2)return 0;
 	float dx = pos2.x - pos1.x;
 	float dy = pos2.y - pos1.y;
 	float dis = sqrt(dx*dx+dy*dy);
