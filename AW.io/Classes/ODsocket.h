@@ -23,7 +23,7 @@ public:
 
 	int Send(char * buffer, int len, int flag = 0);
 
-	int Recv(char *buffer, int len, int flag);
+	int Recv(char *buffer, int len, int flag=0);
 	
 	int Close();
 

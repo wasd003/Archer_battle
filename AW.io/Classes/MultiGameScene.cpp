@@ -1,15 +1,35 @@
 #include "MultiGameScene.h"
 #include "HelloWorldScene.h"
-//#include<pthread.h>
+#include"ODsocket.h"
+#include<pthread.h>
+using namespace std;
+#pragma comment(lib, "pthreadVC2.lib")
 USING_NS_CC;
-
+static MultiGameScene* now;
 bool MultiGameScene::init()
 {
 	if (!Layer::init())return false;
 	//this->schedule(schedule_selector(MultiGameScene::Get, this));
 	//this->schedule(schedule_selector(MultiGameScene::Post, this));
 	
-
+	auto label = LabelTTF::create("HelloWorld", "Arial", 24);
+	label->setTag(111);
+	label->setPosition(Vec2(480, 240));
+	addChild(label, 1);
+	
+	now = this;
+	sock_client = new ODsocket();
+	sock_client->Init();
+	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
+	res = sock_client->Connect("10.2.145.86", 8889);
+	if (res)
+	{
+		pthread_t tid;
+		//创建线程对象
+		bool ok = pthread_create(&tid, NULL, MultiGameScene::getMessage, NULL);
+		//std::cout << "线程启动结果" << ok << endl;
+	}
+	this->scheduleUpdate();
 	return true;
 }
 Scene* MultiGameScene::CreateScene()
@@ -20,6 +40,25 @@ Scene* MultiGameScene::CreateScene()
 	return scene;
 }
 
+void* MultiGameScene::getMessage(void *)
+{
+	char buffer[1024];
+	while (1)
+	{
+		buffer[0] = 0;
+		now->sock_client->Recv(buffer, sizeof(buffer));
+		if (strlen(buffer) > 10)
+		{
+			printf("%s\n", buffer);
+			now->strmsg = buffer;
+		}
+	}
+}
+void MultiGameScene::update(float t)
+{
+	LabelTTF* label = (LabelTTF*)getChildByTag(111);
+	label->setString(strmsg.c_str());
+}
 void MultiGameScene::Get(float t)
 {
 	HttpRequest* request = new HttpRequest();//生成一个请求对象 
