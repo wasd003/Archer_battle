@@ -1,7 +1,7 @@
 #include "ODsocket.h"
 #include<string>
 #ifdef WIN32
-//#pragama comment(lib, "wsock32");
+#pragma comment(lib,"ws2_32.lib")
 #endif
 ODsocket::ODsocket(SOCKET sock )
 {
@@ -25,6 +25,7 @@ bool ODsocket::Connect(const string &ip, unsigned short port)//¿Í»§¶ËÏò·şÎñ¶Ë·¢Ë
 	sevaddr.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
 	sevaddr.sin_family = AF_INET;
 	sevaddr.sin_port = htons(port);
+	memset(sevaddr.sin_zero, 0, sizeof(sevaddr.sin_zero));
 	int ret = connect(m_sock, (struct sockaddr*)&sevaddr, sizeof(sevaddr));//½«Ì×½Ó×ÖÓëÄ¿µÄµØ°ó¶¨ÔÚÒ»Æğ
 	if (ret == SOCKET_ERROR)
 	{
@@ -37,7 +38,7 @@ bool ODsocket::Bind(unsigned short port)
 {
 	struct sockaddr_in sevaddr;//·şÎñ¶ËµØÖ·ĞÅÏ¢
 	sevaddr.sin_family = AF_INET;
-	sevaddr.sin_addr.S_un.S_addr = INADDR_ANY;
+	sevaddr.sin_addr.S_un.S_addr = INADDR_ANY;//bindº¯ÊıÖ»¹ØĞÄ¶Ë¿Ú²»¹ØĞÄµØÖ·
 	sevaddr.sin_port = htons(port);
 	int opt = 1;
 	if (setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)) < 0)	return false;

@@ -10,25 +10,28 @@ bool MultiGameScene::init()
 {
 	if (!Layer::init())return false;
 	//this->schedule(schedule_selector(MultiGameScene::Get, this));
-	//this->schedule(schedule_selector(MultiGameScene::Post, this));
+	//this->schedule(schedule_selector(MultiGameSc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ene::Post, this));
 	
 	auto label = LabelTTF::create("HelloWorld", "Arial", 24);
 	label->setTag(111);
 	label->setPosition(Vec2(480, 240));
 	addChild(label, 1);
-	
+	//连接服务器
 	now = this;
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("10.2.145.86", 8889);
+	res = sock_client->Connect("192.168.1.103", 8867);
+	//向服务器发送信息
+	this->postMessage();
 	if (res)
 	{
 		pthread_t tid;
-		//创建线程对象
-		bool ok = pthread_create(&tid, NULL, MultiGameScene::getMessage, NULL);
-		//std::cout << "线程启动结果" << ok << endl;
+		bool ok = pthread_create(&tid, NULL, MultiGameScene::getMessage, NULL);//创建接受信息的线程
 	}
+
+
+
 	this->scheduleUpdate();
 	return true;
 }
@@ -39,25 +42,25 @@ Scene* MultiGameScene::CreateScene()
 	scene->addChild(layer);
 	return scene;
 }
-
+void MultiGameScene::postMessage()
+{
+	MessageToPost = "Test";
+	sock_client->Send((char*)MessageToPost.c_str(), MessageToPost.length(), 0);
+}
 void* MultiGameScene::getMessage(void *)
 {
 	char buffer[1024];
 	while (1)
-	{
-		buffer[0] = 0;
+	{	
+		memset(buffer, 0, sizeof(buffer));
 		now->sock_client->Recv(buffer, sizeof(buffer));
-		if (strlen(buffer) > 10)
-		{
-			printf("%s\n", buffer);
-			now->strmsg = buffer;
-		}
+		now->strmsg = buffer;
 	}
 }
 void MultiGameScene::update(float t)
 {
 	LabelTTF* label = (LabelTTF*)getChildByTag(111);
-	label->setString(strmsg.c_str());
+	label->setString(now->strmsg.c_str());
 }
 void MultiGameScene::Get(float t)
 {

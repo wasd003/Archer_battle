@@ -9,13 +9,15 @@ USING_NS_CC;
 class MultiGameScene :public Layer
 {
 public:
-	static void* getMessage(void*);
+	static void* getMessage(void*);//从服务端接受信息
+	void postMessage();//向服务端发送信息
 	CREATE_FUNC(MultiGameScene);
 	virtual bool init();
 	static Scene* CreateScene();
 	
-	ODsocket* sock_client;
-	std::string strmsg;
+	ODsocket* sock_client;//客户端套接字
+	std::string strmsg;//从服务器接收到的信息
+	std::string	MessageToPost;//要发送给服务器的信息
 	void update(float t);
 
 private:
