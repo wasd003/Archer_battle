@@ -11,14 +11,14 @@ class SingleGameScene :public Layer
 public:
 	//初始化系列函数
 	CREATE_FUNC(SingleGameScene);
-	bool init();
+	virtual bool init();
 	static Scene* CreateScene();
 	//void InitAllPoint(TMXTiledMap*map);
 	void InitValue();//属性初始化
 	void initWeapon();//武器初始化
 	void InitMap();//地图初始化
-	
-private:
+
+
 
 
 	//标签系列

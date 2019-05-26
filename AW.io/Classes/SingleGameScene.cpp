@@ -245,7 +245,6 @@ void SingleGameScene::MovePerson(float t)
 	{
 		NowHeart->setPosition(Vec2(NowHeart->getPositionX() + SetPos.x, NowHeart->getPositionY() + SetPos.y));
 	}
-
 }
 
 
@@ -332,7 +331,7 @@ void SingleGameScene::MoveArrow(float t)
 
 
 //AI模块
-void SingleGameScene::InitMonster()
+void SingleGameScene::InitMonster()//在地图的四个角生成四个怪兽
 {
 	std::vector<Vec2>v;
 	v.push_back(One);
@@ -614,7 +613,6 @@ void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
 	}
 	Menu * M = static_cast<Menu*> (getChildByTag(MenuTag));
 	M->removeFromParent();
-	log("debug");
 
 }
 void SingleGameScene::ShowBlood(float t)
@@ -744,8 +742,6 @@ void SingleGameScene::CreateHeartStar(const std::string &filename)
 			}
 			else AllHeart.pushBack(sprite);
 		}
-		bool bound=IsInBound(Vec2(x, y));
-		bool is_check=check(Vec2(x, y));
 	}
 }
 void SingleGameScene::SupplyHeartStar(float t)
