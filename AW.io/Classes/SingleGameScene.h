@@ -20,7 +20,6 @@ public:
 
 
 
-
 	//标签系列
 	//static const int MapTag = 88;//地图的标签
 	//static const int LayerTag = 120;//背景层的标签
@@ -86,7 +85,7 @@ public:
 
 	bool ArrowBegan(Touch* t, Event *e);//射箭
 	void ArrowMoved(Touch* t, Event*e);
-	void ArrowEnded(Touch* t, Event*e);
+	virtual void ArrowEnded(Touch* t, Event*e);
 	void MoveArrow(float t);
 	
 	
@@ -112,10 +111,10 @@ public:
 	//添加AI
 	void CreateMonster(float t);
 	void MoveDirect(float t);//确定每个人移动的朝向
-	void MoveAllPerson(float t);//根据朝向决定移动每一个人
-	void Shoot(float t);
+	virtual void MoveAllPerson(float t);//根据朝向决定移动每一个人
+	virtual void Shoot(float t);
 	void Hurt(float t);//人与箭的碰撞检测
-	void Dead(float t);//人的死亡判定，资源回收
+	virtual void Dead(float t);//人的死亡判定，资源回收
 	void InitMonster();
 	//debug
 	int counts;

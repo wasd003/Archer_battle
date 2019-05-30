@@ -98,6 +98,7 @@ int ODsocket::Recv(char *buffer, int len, int flag)
 int ODsocket::Close()
 {
 #ifdef WIN32
+	m_sock = -1;
 		return (closesocket(m_sock));
 #else 
 	return (close(m_sock));

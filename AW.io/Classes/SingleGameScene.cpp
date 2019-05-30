@@ -522,9 +522,9 @@ void SingleGameScene::Hurt(float t)
 			Rect NowArrow_pos = Rect(NowArrow->getPositionX(), NowArrow->getPositionY(), NowArrow->arrow_size, NowArrow->arrow_size);
 			if (NowPerson_pos.intersectsRect(NowArrow_pos))//¼ýÉäÖÐÈË
 			{
-				//log("%d",model->blood);
 			
 				if (NowArrow->master == NowPerson)continue;
+				NowArrow->master->person_score++;
 				if (NowArrow->master == model)
 				{
 					score++;
