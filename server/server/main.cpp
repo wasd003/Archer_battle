@@ -44,6 +44,7 @@ void * DoSocket(void * ptr)//服务端向所有客户端广播
 				if (nowsock.m_sock < 0)
 				{
 					cout<<"cloent close";
+					break;
 				}
 				
 				for (list<string>::iterator it=AllMessage.begin();it!=AllMessage.end();++it)

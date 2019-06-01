@@ -15,6 +15,7 @@ public:
 	Person* master;//¼ýµÄÖ÷ÈË
 	static Arrow*CreateArrow(const std::string &filename);
 	void InitArrow(const std::string &filename);
+	inline double distance(Vec2 pos1, Vec2 pos2);
 	std::string picture;
 	CREATE_FUNC(Arrow);
 };

@@ -617,9 +617,6 @@ void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
 }
 void SingleGameScene::ShowBlood(float t)
 {
-
-
-
 	for (auto NowPerson : AllPerson)
 	{
 		Sprite* now_blood = static_cast<Sprite*>(blood_hash.at(NowPerson));

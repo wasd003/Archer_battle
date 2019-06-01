@@ -22,3 +22,8 @@ void Arrow:: InitArrow(const std::string &filename)
 	this->master = nullptr;
 	speed = 10;
 }
+inline double Arrow::distance(Vec2 pos1, Vec2 pos2)
+{
+	double ans = (pos1.x - pos2.x)*(pos1.x - pos2.x) + (pos1.y - pos2.y)*(pos1.y - pos2.y);
+	return sqrt(ans);
+}
