@@ -29,6 +29,8 @@ public:
 
 	int GetError();
 
+	int setTimeOut(int time);
+
 	static int Init();
 
 	static int Clean();

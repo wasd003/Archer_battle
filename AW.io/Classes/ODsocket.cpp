@@ -18,7 +18,10 @@ bool ODsocket::Create(int AF, int type, int protocal )
 	}
 	return true;
 }
-
+int ODsocket::setTimeOut(int time)
+{
+	return setsockopt(this->m_sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&time, sizeof(int));
+}
 bool ODsocket::Connect(const string &ip, unsigned short port)//客户端向服务端发送连接请求
 {
 	struct sockaddr_in sevaddr;//服务端地址信息

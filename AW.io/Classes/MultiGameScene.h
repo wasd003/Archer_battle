@@ -22,8 +22,8 @@ public:
 	static Scene* CreateScene();
 
 	//联网系列
-	static void* postMessage(void*);
-	static void* getMessage(void*);
+	void postMessage(float t);
+	void getMessage(float t);
 	ODsocket* sock_client;//客户端套接字
 	std::string strmsg;//从服务器接收到的信息
 	std::string	MessageToPost;//要发送给服务器的信息
@@ -48,6 +48,7 @@ public:
 	virtual void ShowBlood(float t);
 	void test(float t);
 	Vec2 LastPos;
+	Arrow* LastArrow;
 	//功能函数
 	Vec2 ToOpenGL(Vec2 pos);//将tile坐标转化为OpenGL坐标
 	//static void* AutoArrow(void* ptr);

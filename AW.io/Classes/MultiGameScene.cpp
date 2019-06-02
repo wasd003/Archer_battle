@@ -31,7 +31,10 @@ bool MultiGameScene::init()
 	this->InitValue();
 	this->initWeapon();
 	this->LastPos = Vec2(0, 0);
+	//this->LastArrow->retain();
+	this->LastArrow = NULL;
 	this->map = TMXTiledMap::create("Tank2.tmx");
+	
 	map->setPosition(Vec2(-1500, -1500));
 	this->addChild(map, -1);
 	GetPos();
@@ -48,14 +51,10 @@ bool MultiGameScene::init()
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("100.67.186.176", 8867);
-	if (res)
-	{
-		pthread_t gost;
-		bool ok_1 = pthread_create(&gost, NULL, MultiGameScene::postMessage, NULL);//´´½¨·¢ËÍÐÅÏ¢µÄÏß³Ì
-		pthread_t get;
-		bool ok_2 = pthread_create(&get, NULL, MultiGameScene::getMessage, NULL);//´´½¨½ÓÊÜÐÅÏ¢µÄÏß³Ì
-	}
+	res = sock_client->Connect("100.67.152.210", 8867);
+	this->sock_client->setTimeOut(10);
+	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
+	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
 
 
 
@@ -73,12 +72,11 @@ bool MultiGameScene::init()
 
 	//ÓÎÏ·Âß¼­
 
-	//this->schedule(schedule_selector(MultiGameScene::Shoot, this));
-	this->schedule(schedule_selector(MultiGameScene::Hurt, this));//ÎÒ·½¼ýÓëÆäËûÍæ¼ÒµÄÅö×²¼ì²â
+	
 	this->schedule(schedule_selector(MultiGameScene::Dead, this));
 
 	//ÐÇÐÇºÍÐÄµÄ²¹³ä
-	this->schedule(schedule_selector(SingleGameScene::SupplyHeartStar, this));
+	//this->schedule(schedule_selector(SingleGameScene::SupplyHeartStar, this));
 
 	//¿ØÖÆÈËÎïÒÆ¶¯
 	auto MoveListen = EventListenerTouchOneByOne::create();
@@ -103,45 +101,51 @@ bool MultiGameScene::init()
 	this->schedule(schedule_selector(MultiGameScene::ShowBlood, this));
 	this->schedule(schedule_selector(SingleGameScene::ChangeWeapon, this));
 	this->schedule(schedule_selector(MultiGameScene::test, this));
+	this->schedule(schedule_selector(MultiGameScene::Hurt, this));//ÎÒ·½¼ýÓëÆäËûÍæ¼ÒµÄÅö×²¼ì²â
 	return true;
 }
 
 //ÁªÍøÄ£¿é
-void* MultiGameScene::postMessage(void*)
+void MultiGameScene::postMessage(float t)
 {
 
 	Person* model = static_cast<Person*>(now->getChildByTag(ModelTag));
-	while (true)
+	
+	
+	Vec2 NowPos = now->map->getPosition();
+	if (NowPos == now->LastPos&&!now->LastArrow)
 	{
-		Vec2 NowPos = now->map->getPosition();
-		if (NowPos == now->LastPos&&now->MyArrow.empty())
-		{
-			continue;
-		}
-		now->LastPos = NowPos;
-		now->DataToString();
-		now->sock_client->Send((char*)now->MessageToPost.c_str(), now->MessageToPost.length(), 0);
+		return;
 	}
+	now->LastPos = NowPos;
+	now->DataToString();
+	now->sock_client->Send((char*)now->MessageToPost.c_str(), now->MessageToPost.length(), 0);
+	
 
-	return NULL;
+	
 }
 
-void* MultiGameScene::getMessage(void*)
+void MultiGameScene::getMessage(float t)
 
 {
 	char buffer[1024];
-	while (true)
+	memset(buffer, 0, sizeof(buffer));
+	now->sock_client->Recv(buffer, sizeof(buffer));
+	now->strmsg = buffer;
+	log("getmessage:%s", now->strmsg.c_str());
+	/*
+	if (now->strmsg.find("Arrow") != now->strmsg.npos)
 	{
-		memset(buffer, 0, sizeof(buffer));
-		now->sock_client->Recv(buffer, sizeof(buffer));
-		now->strmsg = buffer;
-		now->StringToData();
-	}
-	return NULL;
+		log("debug");
+	}*/
+	now->StringToData();
 }
 void MultiGameScene::StringToData()
 {
-
+	if (now->strmsg.empty())
+	{
+		return;
+	}
 	rapidjson::Document document;
 	document.Parse<0>(now->strmsg.c_str());//½«×Ö·û´®¼ÓÔØ½ødocumentÖÐ
 	if (document.HasParseError()) { //´òÓ¡½âÎö´íÎó
@@ -175,6 +179,7 @@ void MultiGameScene::StringToData()
 		Vec2 Pos = Vec2(map->getPositionX() + deltaX, map->getPositionY() + deltaY);
 		NowPerson->setPosition(Pos);
 
+		/*
 		const rapidjson::Value& a = document["Arrow"];
 		assert(a.IsArray());
 		for (auto& v : a.GetArray())
@@ -189,8 +194,35 @@ void MultiGameScene::StringToData()
 			arrow->setPosition(Vec2(NowPerson->getPositionX() + height, NowPerson->getPositionY() + height));
 			arrow->master = NowPerson;
 			this->addChild(arrow);
-			AllArrowList.push_back(arrow);
+			AllArrow.pushBack(arrow);
+		}*/
+		if (document.HasMember("Arrow")) {
+			rapidjson::Value o;      //Ê¹ÓÃÒ»¸öÐÂµÄrapidjson::ValueÀ´´æ·Åobject
+			o = document["Arrow"];
+
+			//È·±£ËüÊÇÒ»¸öObject
+			if (o.IsObject()) {
+
+				string picture = o["picture"].GetString();
+				auto arrow = Arrow::CreateArrow(picture);
+				arrow->arrow_attack = o["attack"].GetInt();
+				arrow->dir = o["dir"].GetDouble();
+				arrow->speed = o["speed"].GetInt();
+				arrow->range = o["range"].GetInt();
+				arrow->StartPosition = Vec2(NowPerson->getPositionX() + height, NowPerson->getPositionY() + height);
+				arrow->setPosition(Vec2(NowPerson->getPositionX() + height, NowPerson->getPositionY() + height));
+				arrow->master = NowPerson;
+				this->addChild(arrow);
+				AllArrow.pushBack(arrow);
+			}
+			else
+			{
+				return;
+			}
+
 		}
+		else return;
+
 	}
 }
 void MultiGameScene::DataToString()//Êý¾Ý×ª»¯³Éjson×Ö·û´®
@@ -208,9 +240,21 @@ void MultiGameScene::DataToString()//Êý¾Ý×ª»¯³Éjson×Ö·û´®
 	const string & name = RoleModel->name;
 	rapidjson::Value val;
 	document.AddMember("Name", val.SetString(name.c_str(), allocator), allocator);
-
-
-
+	
+	if (LastArrow)
+	{
+		rapidjson::Value arrow(kObjectType);
+		arrow.AddMember("attack", LastArrow->arrow_attack, allocator);
+		arrow.AddMember("dir", LastArrow->dir, allocator);
+		arrow.AddMember("speed", LastArrow->speed, allocator);
+		arrow.AddMember("range", LastArrow->range, allocator);
+		const string & pic = LastArrow->picture;
+		arrow.AddMember("picture", val.SetString(pic.c_str(), allocator), allocator);
+		document.AddMember("Arrow", arrow, allocator);
+		LastArrow = NULL;
+	}
+	
+/*
 	rapidjson::Value ArrayForArrow(rapidjson::kArrayType);
 	for (list<Arrow*>::iterator it = MyArrow.begin(); it != MyArrow.end(); ++it)//½«ÎÒ·½Õâ¶ÎÊ±¼äÄÚÉä»÷ÐÅÏ¢ÉÏ´«
 	{
@@ -227,7 +271,7 @@ void MultiGameScene::DataToString()//Êý¾Ý×ª»¯³Éjson×Ö·û´®
 	}
 	MyArrow.clear();
 	document.AddMember("Arrow", ArrayForArrow, allocator);
-
+	*/
 	StringBuffer buffer;
 	rapidjson::Writer<StringBuffer> writer(buffer);
 	document.Accept(writer);
@@ -444,21 +488,27 @@ void MultiGameScene::ArrowEnded(Touch* t, Event*e)//ÐèÒª°ÑÉä³öµÄ¼ýÌí¼Ó½øMyArrowÊ
 		NowDir += 360;
 	}
 	arrow->dir = NowDir * 3.1415926 / 180;
-	AllArrowList.push_back(arrow);
-	MyArrow.push_back(arrow);
+	AllArrow.pushBack(arrow);
+	LastArrow = arrow;
 	this->addChild(arrow);
 }
 void MultiGameScene::Hurt(float t)
 {
 	list<Arrow*>ToErase;
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (AllArrowList.size())
+	{
+		log("test");
+	}
 	for (list<Person*>::iterator it = AllPersonList.begin(); it != AllPersonList.end(); ++it)
 	{
 		Person* NowPerson = *it;
 		Rect NowPerson_pos = Rect(NowPerson->getPositionX(), NowPerson->getPositionY(), height * 2, height * 2);
-		for (list<Arrow*>::iterator it = AllArrowList.begin(); it != AllArrowList.end(); ++it)
+		for (Vector<Arrow*>::iterator i = AllArrow.begin(); i != AllArrow.end(); ++i)
 		{
-			Arrow* NowArrow = *it;
+			Arrow* NowArrow = *i;
+			//log("%s", NowArrow->picture.c_str());
+			//log("%x", NowArrow);
 			Rect NowArrow_pos = Rect(NowArrow->getPositionX(), NowArrow->getPositionY(), NowArrow->arrow_size, NowArrow->arrow_size);
 			if (NowPerson_pos.intersectsRect(NowArrow_pos))//¼ýÉäÖÐÈË
 			{
@@ -497,13 +547,13 @@ void MultiGameScene::Hurt(float t)
 	}
 	for (auto x : ToErase)//É¾³ý¼ý
 	{
-		AllArrowList.remove(x);
+		AllArrow.eraseObject(x);
 	}
 }
 void MultiGameScene::MoveArrow(float t)
 {
 	list<Arrow*>ToErase;
-	for (list<Arrow*>::iterator it = AllArrowList.begin(); it != AllArrowList.end(); it++)
+	for (Vector<Arrow*>::iterator it = AllArrow.begin(); it != AllArrow.end(); it++)
 	{
 		Arrow* nowArrow = *it;
 		double dis = distance(nowArrow->getPosition(), nowArrow->StartPosition);
@@ -526,15 +576,15 @@ void MultiGameScene::MoveArrow(float t)
 	}
 	for (auto x : ToErase)
 	{
-		AllArrowList.remove(x);
+		AllArrow.eraseObject(x);
 	}
 }
 void MultiGameScene::test(float t)
 {
-	log("arrow number:%d", AllArrowList.size());
-	for (auto x : AllArrowList)
+	for (list<Arrow*>::iterator it=AllArrowList.begin();it!=AllArrowList.end();++it)
 	{
-		log("%s", x->picture.c_str());
+		Arrow* NowArrow = *it;
+		
 	}
 }
 Vec2 MultiGameScene::ToOpenGL(Vec2 pos)
