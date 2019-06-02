@@ -16,6 +16,7 @@ using namespace std;
 USING_NS_CC;
 static MultiGameScene* now;
 
+//初始化模块
 Scene* MultiGameScene::CreateScene()
 {
 	auto scene = Scene::create();
@@ -34,7 +35,7 @@ bool MultiGameScene::init()
 	//this->LastArrow->retain();
 	this->LastArrow = NULL;
 	this->map = TMXTiledMap::create("Tank2.tmx");
-	
+
 	map->setPosition(Vec2(-1500, -1500));
 	this->addChild(map, -1);
 	GetPos();
@@ -51,7 +52,7 @@ bool MultiGameScene::init()
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("100.67.152.210", 8867);
+	res = sock_client->Connect("100.67.238.31", 8867);
 	this->sock_client->setTimeOut(10);
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
@@ -72,7 +73,7 @@ bool MultiGameScene::init()
 
 	//游戏逻辑
 
-	
+
 	this->schedule(schedule_selector(MultiGameScene::Dead, this));
 
 	//星星和心的补充
@@ -110,21 +111,20 @@ void MultiGameScene::postMessage(float t)
 {
 
 	Person* model = static_cast<Person*>(now->getChildByTag(ModelTag));
-	
-	
+
+
 	Vec2 NowPos = now->map->getPosition();
-	if (NowPos == now->LastPos&&!now->LastArrow)
+	if (NowPos == now->LastPos && !now->LastArrow)
 	{
 		return;
 	}
 	now->LastPos = NowPos;
 	now->DataToString();
 	now->sock_client->Send((char*)now->MessageToPost.c_str(), now->MessageToPost.length(), 0);
-	
 
-	
+
+
 }
-
 void MultiGameScene::getMessage(float t)
 
 {
@@ -133,11 +133,10 @@ void MultiGameScene::getMessage(float t)
 	now->sock_client->Recv(buffer, sizeof(buffer));
 	now->strmsg = buffer;
 	log("getmessage:%s", now->strmsg.c_str());
-	/*
 	if (now->strmsg.find("Arrow") != now->strmsg.npos)
 	{
 		log("debug");
-	}*/
+	}
 	now->StringToData();
 }
 void MultiGameScene::StringToData()
@@ -214,6 +213,7 @@ void MultiGameScene::StringToData()
 				arrow->master = NowPerson;
 				this->addChild(arrow);
 				AllArrow.pushBack(arrow);
+				NowPerson->setRotation(o["dir"].GetDouble()*-180 / 3.1415926);
 			}
 			else
 			{
@@ -240,7 +240,7 @@ void MultiGameScene::DataToString()//数据转化成json字符串
 	const string & name = RoleModel->name;
 	rapidjson::Value val;
 	document.AddMember("Name", val.SetString(name.c_str(), allocator), allocator);
-	
+
 	if (LastArrow)
 	{
 		rapidjson::Value arrow(kObjectType);
@@ -253,25 +253,25 @@ void MultiGameScene::DataToString()//数据转化成json字符串
 		document.AddMember("Arrow", arrow, allocator);
 		LastArrow = NULL;
 	}
-	
-/*
-	rapidjson::Value ArrayForArrow(rapidjson::kArrayType);
-	for (list<Arrow*>::iterator it = MyArrow.begin(); it != MyArrow.end(); ++it)//将我方这段时间内射击信息上传
-	{
-		Arrow* NowArrow = *it;
-		rapidjson::Value object(rapidjson::kObjectType);
-		object.AddMember("attack", NowArrow->arrow_attack, allocator);
-		object.AddMember("dir", NowArrow->dir, allocator);
-		object.AddMember("speed", NowArrow->speed, allocator);
-		object.AddMember("range", NowArrow->range, allocator);
-		const string & pic = NowArrow->picture;
-		rapidjson::Value val;
-		object.AddMember("picture", val.SetString(pic.c_str(), allocator), allocator);
-		ArrayForArrow.PushBack(object, allocator);
-	}
-	MyArrow.clear();
-	document.AddMember("Arrow", ArrayForArrow, allocator);
-	*/
+
+	/*
+		rapidjson::Value ArrayForArrow(rapidjson::kArrayType);
+		for (list<Arrow*>::iterator it = MyArrow.begin(); it != MyArrow.end(); ++it)//将我方这段时间内射击信息上传
+		{
+			Arrow* NowArrow = *it;
+			rapidjson::Value object(rapidjson::kObjectType);
+			object.AddMember("attack", NowArrow->arrow_attack, allocator);
+			object.AddMember("dir", NowArrow->dir, allocator);
+			object.AddMember("speed", NowArrow->speed, allocator);
+			object.AddMember("range", NowArrow->range, allocator);
+			const string & pic = NowArrow->picture;
+			rapidjson::Value val;
+			object.AddMember("picture", val.SetString(pic.c_str(), allocator), allocator);
+			ArrayForArrow.PushBack(object, allocator);
+		}
+		MyArrow.clear();
+		document.AddMember("Arrow", ArrayForArrow, allocator);
+		*/
 	StringBuffer buffer;
 	rapidjson::Writer<StringBuffer> writer(buffer);
 	document.Accept(writer);
@@ -279,43 +279,9 @@ void MultiGameScene::DataToString()//数据转化成json字符串
 	now->MessageToPost = buffer.GetString();
 	now->MessageToPost += '\n';
 }
-#if false
-void* MultiGameScene::AutoArrow(void* ptr)
-{
-	Arrow* NowArrow = static_cast<Arrow*>(ptr);
 
-	while (NowArrow)
-	{
-		float x = NowArrow->getPositionX() + NowArrow->speed*cos(NowArrow->dir);
-		float y = NowArrow->getPositionY() + NowArrow->speed*sin(NowArrow->dir);
-		NowArrow->setPosition(Vec2(x, y));
-		if (distance(NowArrow->getPosition(), NowArrow->StartPosition) > NowArrow->range)//判断出界
-		{
-			NowArrow->removeFromParent();
-		}
-		for (list<Person*>::iterator it = AllPersonList.begin(); it != AllPersonList.end(); ++it)//判断碰撞
-		{
-			Person* NowPerson = *it;
-			Rect NowPerson_pos = Rect(NowPerson->getPositionX(), NowPerson->getPositionY(), 20 * 2, 20 * 2);
-			Rect NowArrow_pos = Rect(NowArrow->getPositionX(), NowArrow->getPositionY(), NowArrow->arrow_size, NowArrow->arrow_size);
-			if (NowPerson_pos.intersectsRect(NowArrow_pos))//箭射中人
-			{
 
-				if (NowArrow->master == NowPerson)continue;
-				NowArrow->master->person_score++;
-				NowPerson->blood -= NowArrow->arrow_attack*NowArrow->master->attack;//掉血
-				NowArrow->removeFromParent();
-			}
-
-		}
-		if (!NowArrow) {
-			break;
-		}
-		Sleep(10);
-	}
-	return NULL;
-}
-#endif
+//函数重写
 void MultiGameScene::ShowBlood(float t)
 {
 	for (auto NowPerson : AllPersonList)
@@ -361,10 +327,7 @@ void MultiGameScene::InitAllPerson()//根据服务器广播的所有人的行列坐标设置所有人
 	NameToPerson.insert("JesPark", person);
 	this->addChild(person);
 }
-void MultiGameScene::Shoot(float t)//模拟其余玩家的射箭
-{
 
-}
 void MultiGameScene::MovePerson(float t)
 {
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
@@ -464,8 +427,9 @@ void MultiGameScene::Dead(float t)//自己死，场景跳转，别人死，从排行榜上除名
 	}
 	for (auto x : ToErase)
 	{
-		AllPersonList.remove(x);
 		dead.insert(x->name);//将已死亡的玩家加入死亡名单
+		AllPersonList.remove(x);
+
 	}
 }
 void MultiGameScene::ArrowEnded(Touch* t, Event*e)//需要把射出的箭添加进MyArrow数组中
@@ -496,10 +460,6 @@ void MultiGameScene::Hurt(float t)
 {
 	list<Arrow*>ToErase;
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
-	if (AllArrowList.size())
-	{
-		log("test");
-	}
 	for (list<Person*>::iterator it = AllPersonList.begin(); it != AllPersonList.end(); ++it)
 	{
 		Person* NowPerson = *it;
@@ -514,13 +474,16 @@ void MultiGameScene::Hurt(float t)
 			{
 
 				if (NowArrow->master == NowPerson)continue;
-				NowArrow->master->person_score++;
-				if (NowArrow->master == model)
+				//NowArrow->master->person_score++;
+				if (NowArrow->master == model)//如果玩家射中别人-->加分
 				{
 					score++;
 					LabelScore->setString(String::createWithFormat("Score:%d", score)->_string);
 				}
-				NowPerson->blood -= NowArrow->arrow_attack*NowArrow->master->attack;//掉血
+				if (NowPerson == model)//如果玩家被射中-->掉血
+				{
+					model->blood-= NowArrow->arrow_attack*NowArrow->master->attack;
+				}
 				float dx = NowArrow->speed*cos(NowArrow->dir);//受击后产生位移
 				float dy = NowArrow->speed*sin(NowArrow->dir);
 				Vec2 next_pos = Vec2(NowPerson->getPositionX() + dx, NowPerson->getPositionY() + dy);
@@ -581,18 +544,8 @@ void MultiGameScene::MoveArrow(float t)
 }
 void MultiGameScene::test(float t)
 {
-	for (list<Arrow*>::iterator it=AllArrowList.begin();it!=AllArrowList.end();++it)
-	{
-		Arrow* NowArrow = *it;
-		
-	}
+	
 }
-Vec2 MultiGameScene::ToOpenGL(Vec2 pos)
-{
-	Vec2 anchor = map->getPosition();
-	float y = anchor.y + 3000 - 30 * pos.x;
-	float x = anchor.x + 30 * pos.y;
-	return Vec2(x, y);
-}
+
 
 
