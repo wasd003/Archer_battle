@@ -11,12 +11,11 @@
 #include "Arrow.h"
 #include "Rocker.h"
 #include "ui/CocosGUI.h"
-#include "cocos-ext.h"
 #pragma comment(lib, "pthreadVC2.lib")
 using namespace  rapidjson;
 using namespace std;
+using namespace cocos2d::ui;
 USING_NS_CC;
-USING_NS_CC_EXT;
 static MultiGameScene* now;
 
 //初始化模块
@@ -50,65 +49,29 @@ bool MultiGameScene::init()
 	model->setPosition(Vec2(winsize.width / 2, winsize.height / 2));
 	AllPersonList.push_back(model);
 	RoleModel = model;
-	/*
-	//输入昵称编辑框
-	
-	Sprite *bg = Sprite::create("background_edit.png");
-	bg->setPosition(Point(winsize.width / 2, winsize.height / 2));
-	addChild(bg);
-	Size editBoxSize = Size(winsize.width - 100, 60);
-	_editName = EditBox::create(editBoxSize, Scale9Sprite::create("green_edit.png"));
-	_editName->setPlaceHolder("Name:");
-	_editName->setPlaceholderFontColor(Color3B::WHITE);
-	_editName->setMaxLength(8);
-	_editName->setReturnType(EditBox::KeyboardReturnType::DEFAULT);//结束输入时键盘的类型 
-	_editName->setDelegate((cocos2d::ui::EditBoxDelegate*)this);//事件代理为当前对象 
-
-	_editName->setPosition(Vec2(winsize.width / 2, 200));//输入框位置 
-	_editName->setFontSize(25);
-	_editName->setFontColor(Color3B::RED);
-	addChild(_editName);
-
-	// middle
-	_editPassword = EditBox::create(editBoxSize, Scale9Sprite::create("orange_edit.png"));
-	_editPassword->setPosition(Vec2(winsize.width / 2, 120));
-	_editPassword->setFontColor(Color3B::GREEN);
-	_editPassword->setPlaceHolder("Password:");
-	_editPassword->setMaxLength(6);
-	_editPassword->setInputFlag(EditBox::InputFlag::PASSWORD);
-	_editPassword->setInputMode(EditBox::InputMode::SINGLE_LINE);
-	_editPassword->setDelegate((cocos2d::ui::EditBoxDelegate*)this);
-	addChild(_editPassword);
 
 
-	_displayValueLabel = LabelTTF::create("", "Marker Felt", 30);
-	_displayValueLabel->setAnchorPoint(Point(0.5f, -1));
-	_displayValueLabel->setPosition(Vec2(winsize.width / 2.0f, winsize.height - 100));
-	addChild(_displayValueLabel, 1);
-	*/
-	Size size = Director::getInstance()->getVisibleSize();
-	_displayValueLabel = cocos2d::ui::Text::create("No Event", "Marker Felt.ttf", 32);
-	_displayValueLabel->setAnchorPoint(Vec2(0.5f, -1.0f));
-	_displayValueLabel->setPosition(Vec2(size.width / 2.0f, size.height / 2.0f + _displayValueLabel->getContentSize().height * 1.5f));
-	this->addChild(_displayValueLabel);
-
-
-	cocos2d::ui::TextField* textField = cocos2d::ui::TextField::create("input words here", "Arial", 30);
+	//编辑框
+	textField = cocos2d::ui::TextField::create("input you name", "Arial", 30);
 	textField->setMaxLengthEnabled(true);
-	textField->setMaxLength(3);
-	textField->setPosition(Vec2(size.width / 2.0f, size.height / 2.0f));
+	textField->setMaxLength(8);
+	textField->setPosition(Vec2(winsize.width / 2.0f, winsize.height / 2.0f));
 	textField->addEventListener(CC_CALLBACK_2(MultiGameScene::textFieldEvent, this));
+	textField->retain();
 	this->addChild(textField);
+
+	
+	
 	//通信
 	now = this;
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("192.168.1.103", 8867);
+	res = sock_client->Connect("100.66.49.237", 8867);
 	this->sock_client->setTimeOut(10);//设置recv超时时间
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
-
+	
 
 
 	//加载所有玩家
@@ -159,86 +122,32 @@ bool MultiGameScene::init()
 }
 
 
-//编辑框
-void MultiGameScene::editBoxEditingDidBegin(cocos2d::extension::EditBox* editBox)
-{
-	if (_editName == editBox)
-	{
-		_displayValueLabel->setString("Name EditBox DidBegin !");
-	}
-	else if (_editPassword == editBox)
-	{
-		_displayValueLabel->setString("Password EditBox DidBegin !");
-	}
-}
-void MultiGameScene::editBoxEditingDidEnd(cocos2d::extension::EditBox* editBox)
-{
-	if (_editName == editBox)
-	{
-		_displayValueLabel->setString("Name EditBox DidEnd !");
-	}
-	else if (_editPassword == editBox)
-	{
-		_displayValueLabel->setString("Password EditBox DidEnd !");
-	}
-}
-void MultiGameScene::editBoxTextChanged(cocos2d::extension::EditBox* editBox, const std::string& text)
-{
-	if (_editName == editBox)
-	{
-		_displayValueLabel->setString(String::createWithFormat("EditBox Name TextChanged, text: %s ", text.c_str())->getCString());
-	}
-	else if (_editPassword == editBox)
-	{
-		_displayValueLabel->setString(String::createWithFormat("EditBox Password TextChanged, text: %s ", text.c_str())->getCString());
-	}
-}
-void MultiGameScene::editBoxReturn(cocos2d::extension::EditBox* editBox)
-{
-	if (_editName == editBox)
-	{
-		_displayValueLabel->setString("Name EditBox return !");
-	}
-	else if (_editPassword == editBox)
-	{
-		_displayValueLabel->setString("Password EditBox return !");
-	}
-}
-
+//编辑框回调函数
 void MultiGameScene::textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type)
 {
 	switch (type)
 	{
-	case cocos2d::ui::TextField::EventType::ATTACH_WITH_IME:
+	case cocos2d::ui::TextField::EventType::ATTACH_WITH_IME://点击编辑框
 	{
-		cocos2d::ui::TextField* textField = dynamic_cast<cocos2d::ui::TextField*>(pSender);
-		Size screenSize = CCDirector::getInstance()->getWinSize();
-		textField->runAction(CCMoveTo::create(0.225f,
-			Vec2(screenSize.width / 2.0f, screenSize.height / 2.0f + textField->getContentSize().height / 2.0f)));
-		_displayValueLabel->setString(String::createWithFormat("attach with IME max length %d", textField->getMaxLength())->getCString());
 	}
 	break;
 
-	case cocos2d::ui::TextField::EventType::DETACH_WITH_IME:
+	case cocos2d::ui::TextField::EventType::DETACH_WITH_IME://点击编辑框的其他位置
 	{
-		cocos2d::ui::TextField* textField = dynamic_cast<cocos2d::ui::TextField*>(pSender);
-		Size screenSize = CCDirector::getInstance()->getWinSize();
-		textField->runAction(CCMoveTo::create(0.175f, Vec2(screenSize.width / 2.0f, screenSize.height / 2.0f)));
-		_displayValueLabel->setString(String::createWithFormat("detach with IME max length %d", textField->getMaxLength())->getCString());
+		this->textField->removeFromParent();//输入完成，删除编辑框
 	}
 	break;
 
-	case cocos2d::ui::TextField::EventType::INSERT_TEXT:
+	case cocos2d::ui::TextField::EventType::INSERT_TEXT://键盘输入
 	{
-		TextField* textField = dynamic_cast<cocos2d::ui::TextField*>(pSender);
-		_displayValueLabel->setString(String::createWithFormat("insert words max length %d", textField->getMaxLength())->getCString());
+		auto  s = static_cast<TextField*>(pSender);
+		RoleModel->name = s->getString();
 	}
 	break;
 
-	case cocos2d::ui::TextField::EventType::DELETE_BACKWARD:
+	case cocos2d::ui::TextField::EventType::DELETE_BACKWARD://键盘删除
 	{
-		TextField* textField = dynamic_cast<cocos2d::ui::TextField*>(pSender);
-		_displayValueLabel->setString(String::createWithFormat("delete word max length %d", textField->getMaxLength())->getCString());
+		RoleModel->name = RoleModel->name.substr(0, RoleModel->name.length() - 1);
 	}
 	break;
 
