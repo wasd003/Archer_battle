@@ -20,7 +20,7 @@ bool SingleGameScene::init()
 	
 
 	//加载地图
-	this->map = TMXTiledMap::create("Tank2.tmx");
+	this->map = TMXTiledMap::create("map.tmx");
 	map->setPosition(Vec2(224, -2074));
 	this->addChild(map, -1);
 	GetPos();
@@ -47,7 +47,7 @@ bool SingleGameScene::init()
 	//创建星星和心
 	InitHeartStar();
 	//设置摇杆
-	auto rocker = Rocker::create("CloseSelected.png","rr.png", rockerBG_Position);
+	auto rocker = Rocker::create("CloseSelected.png","rr.png", rockerBG_Position,Vec2(130,130));
 	rocker->setTag(RockerTag);
 	this->addChild(rocker);
 	rocker->StartRocker();
@@ -137,6 +137,10 @@ void SingleGameScene::ArrowCopy(Arrow* first,Arrow* second)
 	first->range = second->range;
 	first->arrow_attack = second->arrow_attack;
 	first->picture = second->picture;
+	first->is_attack = second->is_attack;
+	first->is_range = second->is_range;
+	first->is_speed = second->is_speed;
+	first->is_weapon = second->is_weapon;
 }
 inline int SingleGameScene::random(int a, int b)
 {
@@ -286,7 +290,7 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 	auto arrow = Arrow::CreateArrow(picture);
 	arrow->arrow_attack = model->weapon->arrow_attack;
 	arrow->speed = model->weapon->speed;
-	arrow->range = model->weapon->range;
+	arrow->range = model->weapon->range*model->arrow_range;
 	arrow->arrow_size = model->weapon->arrow_size;
 	arrow->setPosition(model->getPosition());
 	arrow->StartPosition = model->getPosition()+Vec2(height,height);
@@ -602,13 +606,64 @@ void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
 	switch (tag)
 	{
 	case 1:
+		if (!NowWeapon_1->is_weapon)//属性提升
+		{
+			if (NowWeapon_1->is_attack)
+			{
+				model->attack *= 1.2;
+			}
+			else if (NowWeapon_1->is_range)
+			{
+				model->weapon->range += 20;
+			}
+			else if (NowWeapon_1->is_speed)
+			{
+				model->speed += 1;
+			}
+			break;
+		}
 		ArrowCopy(model->weapon, NowWeapon_1);
+		model->weapon->picture = "real_"+NowWeapon_1->picture;
 		break;
 	case 2:
+		if (!NowWeapon_2->is_weapon)//属性提升
+		{
+			if (NowWeapon_2->is_attack)
+			{
+				model->attack *= 1.2;
+			}
+			else if (NowWeapon_2->is_range)
+			{
+				model->weapon->range += 20;
+			}
+			else if (NowWeapon_2->is_speed)
+			{
+				model->speed += 1;
+			}
+			break;
+		}
 		ArrowCopy(model->weapon, NowWeapon_2);
+		model->weapon->picture = "real_" + NowWeapon_2->picture;
 		break;
 	case 3:
+		if (!NowWeapon_3->is_weapon)//属性提升
+		{
+			if (NowWeapon_3->is_attack)
+			{
+				model->attack *= 1.2;
+			}
+			else if (NowWeapon_3->is_range)
+			{
+				model->weapon->range += 20;
+			}
+			else if (NowWeapon_3->is_speed)
+			{
+				model->speed += 1;
+			}
+			break;
+		}
 		ArrowCopy(model->weapon, NowWeapon_3);
+		model->weapon->picture = "real_" + NowWeapon_3->picture;
 		break;
 	}
 	Menu * M = static_cast<Menu*> (getChildByTag(MenuTag));
@@ -658,11 +713,10 @@ void SingleGameScene::ChangeWeapon(float t)
 	if (!model)
 	{
 		log("wtf");
+		return;
 	}
 	if (model->blue < 100)
 	{
-		//model->blue += 5;
-		//log("blue:%d", model->blue);
 		return;
 	}
 	Vector<MenuItem*>v;
@@ -785,7 +839,7 @@ void SingleGameScene::InitAllPoint(TMXTiledMap*map)
 */
 void SingleGameScene::InitValue()
 {
-	this->rockerBG_Position = Vec2(100, 100);
+	this->rockerBG_Position = Vec2(150, 130);
 	this->current_point = rockerBG_Position;
 	this->MonsterNumber = 5;
 	this->score = 0;
@@ -817,7 +871,6 @@ void SingleGameScene::initWeapon()
 	ax->arrow_attack = 20;
 	ax->speed = 8;
 	ax->range = 200;
-	ax->picture = "ax.png";
 	ax->retain();
 	AllWeapon.pushBack(ax);
 
@@ -826,7 +879,6 @@ void SingleGameScene::initWeapon()
 	fire->arrow_attack = 15;
 	fire->speed = 20;
 	fire->range = 200;
-	fire->picture = "fire.png";
 	fire->retain();
 	AllWeapon.pushBack(fire);
 
@@ -834,14 +886,56 @@ void SingleGameScene::initWeapon()
 	auto laser = Arrow::CreateArrow("laser.png");
 	laser->arrow_attack = 30;
 	laser->speed = 5;
-	laser->range = 50;
-	laser->picture = "laser.png";
+	laser->range = 150;
 	laser->retain();
 	AllWeapon.pushBack(laser);
 
+	//飞镖
+	auto kuwu = Arrow::CreateArrow("kuwu.png");
+	kuwu->arrow_attack = 12;
+	kuwu->speed = 25;
+	kuwu->range = 350;
+	kuwu->retain();
+	AllWeapon.pushBack(kuwu);
+
+	//电磁球
+	auto ball = Arrow::CreateArrow("ball.png");
+	ball->arrow_attack = 20;
+	ball->speed = 20;
+	ball->range = 140;
+	ball->retain();
+	AllWeapon.pushBack(ball);
+
+	//攻击力提升
+	auto attack = Arrow::CreateArrow("attack.png");
+	attack->is_weapon = false;
+	attack->is_attack = true;
+	attack->retain();
+	AllWeapon.pushBack(attack);
+
+	//防御力提升
+	auto defence = Arrow::CreateArrow("defence.png");
+	defence->is_weapon = false;
+	defence->retain();
+	AllWeapon.pushBack(defence);
+
+	//射程提升
+	auto range = Arrow::CreateArrow("range.png");
+	range->is_weapon = false;
+	range->is_range = true;
+	range->retain();
+	AllWeapon.pushBack(range);
+
+	//速度提升
+	auto speed = Arrow::CreateArrow("speed.png");
+	speed->is_weapon = false;
+	speed->is_speed = true;
+	speed->retain();
+	AllWeapon.pushBack(speed);
 }
 void SingleGameScene::InitMap()
 {
+	//墙壁
 	for (int i = 3; i <= 90; i++)
 	{
 		StopCheck.insert(Vec2(3, i));
@@ -858,13 +952,45 @@ void SingleGameScene::InitMap()
 	{
 		StopCheck.insert(Vec2(i, 90));
 	}
-	for (int i = 20; i <= 70; i++)
+
+	//障碍物
+	
+	addrow(8, 11, 23, 32, 44, 55, 68, 78, 91);
+	addrow(26, 11, 23, 32, 44, 56, 68, 78, 91);
+	addrow(44, 15, 27, 36, 51, 62, 75, 81, 93);
+	addrow(84, 20, 45, 58, 84,  99, 99, 99, 99);
+	addcol(3,13,17,38,62,84);
+	addcol(20,32,17,38,62,84);
+	addcol(36,51,24,44,73,83);
+	addcol(62, 84,20,45,58,84);
+	for (int i = 53; i <= 88; i++) StopCheck.insert(Vec2(i, 52));
+}
+void SingleGameScene::addrow(int row, int col1, int col2, int col3, int col4, int col5, int col6, int col7, int col8)
+{
+	for (int i = col1; i <= col2; i++)
 	{
-		StopCheck.insert(Vec2(85, i));
+		StopCheck.insert(Vec2(row, i));
 	}
-	for (int i = 80; i <= 90; i++)
+	for (int i = col3; i <= col4; i++)
 	{
-		StopCheck.insert(Vec2(i, 32));
-		StopCheck.insert(Vec2(i, 63));
+		StopCheck.insert(Vec2(row, i));
+	}
+	for (int i = col5; i <= col6; i++)
+	{
+		StopCheck.insert(Vec2(row, i));
+	}
+	for (int i = col7; i <= col8; i++)
+	{
+		StopCheck.insert(Vec2(row, i));
+	}
+}
+void SingleGameScene::addcol(int row1, int row2, int col1, int col2, int col3, int col4)
+{
+	for (int i = row1; i <= row2; i++)
+	{
+		StopCheck.insert(Vec2(i, col1));
+		StopCheck.insert(Vec2(i, col2));
+		StopCheck.insert(Vec2(i, col3));
+		StopCheck.insert(Vec2(i, col4));
 	}
 }

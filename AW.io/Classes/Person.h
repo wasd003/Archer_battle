@@ -16,7 +16,7 @@ public:
 	float attack;//攻击力放大倍数
 	float defence;//防御力
 	int speed;//移动速度
-	int arrow_speed;//箭的移动速度
+	float arrow_range;//箭的射程提升倍数
 	int person_score;//人物得分
 	string name;//玩家姓名
 	CREATE_FUNC(Person);

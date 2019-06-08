@@ -8,9 +8,12 @@
 #include "SingleGameScene.h"
 #include "Arrow.h"
 #include "Rocker.h"
+#include "cocos-ext.h"
+#include "ui/CocosGUI.h"
 #include<list>
 using namespace cocos2d::network;
 USING_NS_CC;
+USING_NS_CC_EXT;
 using namespace std;
 class MultiGameScene :public SingleGameScene
 {
@@ -49,6 +52,19 @@ public:
 	virtual void MoveArrow(float t);
 	virtual void MovePerson(float t);
 	virtual void ShowBlood(float t);
+
+	//±à¼­¿ò
+	virtual void editBoxEditingDidBegin(cocos2d::extension::EditBox* editBox);
+	virtual void editBoxEditingDidEnd(cocos2d::extension::EditBox* editBox);
+	virtual void editBoxTextChanged(cocos2d::extension::EditBox* editBox, const std::string& text);
+	virtual void editBoxReturn(cocos2d::extension::EditBox* editBox);
+	EditBox *_editName;
+	EditBox* _editPassword;
+	LabelTTF* _displayValueLabel;
+
+	void textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type);
+	cocos2d::ui::Text*  _displayValueLabel;
+
 
 
 	//debug

@@ -6,7 +6,7 @@ USING_NS_CC;
 class Rocker :public Layer
 {
 public:
-	static Rocker* create(const std::string& RockerImage, const std::string& RockerBackImage,Vec2 pos);
+	static Rocker* create(const std::string& RockerImage, const std::string& RockerBackImage,Vec2 posBG,Vec2 pos);
 	void StartRocker();
 	void set();
 	static const int tag_rocker = 50;//“£∏À±Í«©

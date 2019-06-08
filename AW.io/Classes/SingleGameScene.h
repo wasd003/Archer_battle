@@ -97,7 +97,8 @@ public:
 	void GetPos();//获得地图的四个角的坐标
 	void ArrowCopy(Arrow* first, Arrow* second);//箭的深拷贝
 	bool IsInBound(Vec2 pos);
-
+	void addrow(int row, int col1, int col2, int col3, int col4, int col5, int col6, int col7, int col8);
+	void addcol(int row1, int row2, int col1, int col2, int col3, int col4);
 
 	//物品
 	void ShowBlood(float t);

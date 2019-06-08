@@ -1,6 +1,6 @@
 #include "Rocker.h"
 USING_NS_CC;
-Rocker* Rocker::create(const std::string& RockerImage, const std::string& RockerBackImage,Vec2 pos)
+Rocker* Rocker::create(const std::string& RockerImage, const std::string& RockerBackImage,Vec2 posBG,Vec2 pos)
 {
 	static Rocker*layer = new Rocker();
 	if (layer)
@@ -9,7 +9,7 @@ Rocker* Rocker::create(const std::string& RockerImage, const std::string& Rocker
 		Sprite* rocker = Sprite::create(RockerImage);
 		auto rockerBG = Sprite::create(RockerBackImage);
 		rocker->setPosition(pos);
-		rockerBG->setPosition(pos);
+		rockerBG->setPosition(posBG);
 		rocker->setTag(tag_rocker);
 		rockerBG->setTag(tag_rockerBG);
 		layer->addChild(rockerBG);

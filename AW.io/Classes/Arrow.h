@@ -11,6 +11,10 @@ public:
 	double dir;
 	int speed;
 	int range;//射程
+	bool is_weapon;
+	bool is_attack;//提升攻击力
+	bool is_range;//提升射程
+	bool is_speed;//提升速度
 	Vec2 StartPosition;//箭的起始位
 	Person* master;//箭的主人
 	static Arrow*CreateArrow(const std::string &filename);

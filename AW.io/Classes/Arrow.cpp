@@ -18,6 +18,10 @@ void Arrow:: InitArrow(const std::string &filename)
 	this->arrow_size = 40;
 	this->range = 250;
 	this->picture = filename;
+	this->is_weapon = true;
+	this->is_attack = false;
+	this->is_range = false;
+	this->is_speed = false;
 	dir = 0.0;
 	this->master = nullptr;
 	speed = 10;
