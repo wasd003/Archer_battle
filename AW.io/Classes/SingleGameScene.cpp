@@ -7,6 +7,7 @@
 #include <ctime>
 #include<cstring>
 #include<string>
+#include <random>
 USING_NS_CC;
 
 bool SingleGameScene::init()
@@ -117,7 +118,7 @@ void SingleGameScene::GetPos()
 	Three = map->getPosition();
 	Three.x += 500, Three.y +=500;
 	Two = Three + Vec2(0, 2000);
-	One = Two + Vec2(2000, 2000);
+	One = Three + Vec2(2000, 2000);
 	Four = Three + Vec2(2000,0);
 }
 inline double SingleGameScene::distance(Vec2 pos1, Vec2 pos2)
@@ -760,7 +761,8 @@ void SingleGameScene::ChangeWeapon(float t)
 void SingleGameScene::InitHeartStar()
 {
 	//创建25个星星和25个心，每一队五个
-	for (int i = 1; i <= 40; i++)
+	GetPos();
+	for (int i = 1; i <= 200; i++)
 	{
 		CreateHeartStar("heart.png");
 		CreateHeartStar("star.png");
@@ -769,30 +771,23 @@ void SingleGameScene::InitHeartStar()
 }
 void SingleGameScene::CreateHeartStar(const std::string &filename)
 {
-	srand(counts++);
-	int dx[2] = { 30,0 };
-	int dy[2] = { 0,30};
-	int star_dir = random(0,2);
 	
-	GetPos();
-	Vec2 anchor = map->getPosition();
-	Vec2 star_start = Vec2(random(Two.x,One.x), random(Three.y,One.y));
-	for (int k = 0; k < 5; k++)
+	std::default_random_engine random(counts++);
+	std::uniform_real_distribution<float> randx(Two.x, One.x);
+	std::uniform_real_distribution<float> randy(Three.y, One.y);
+	Sprite* sprite = Sprite::create(filename);
+	float x = randx(random);
+	float y = randy(random);
+	sprite->setPosition(Vec2(x, y));
+	if (check(Vec2(x, y)) && IsInBound(Vec2(x, y)))
 	{
-		Sprite* sprite = Sprite::create(filename);
-		float x = star_start.x + dx[star_dir] * k;
-		float y = star_start.y + dy[star_dir] * k;
-		sprite->setPosition(Vec2(x, y));
-		if (check(Vec2(x, y))&& IsInBound(Vec2(x, y)))
-		{
 
-			this->addChild(sprite);
-			if (filename == "star.png")
-			{
-				AllStar.pushBack(sprite);
-			}
-			else AllHeart.pushBack(sprite);
+		this->addChild(sprite);
+		if (filename == "star.png")
+		{
+			AllStar.pushBack(sprite);
 		}
+		else AllHeart.pushBack(sprite);
 	}
 }
 void SingleGameScene::SupplyHeartStar(float t)
