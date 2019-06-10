@@ -40,6 +40,9 @@ public:
 	list<Person*>AllPersonList;//保存所有人
 	Vec2 LastPos;//上一次的位置
 	Arrow* LastArrow;//发出的箭
+	string LastWord;
+
+	
 
 	//函数重写
 	void InitAllPerson();
@@ -55,6 +58,13 @@ public:
 	void textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type);
 	cocos2d::ui::TextField* textField;//编辑框对象
 
+
+	//聊天室
+	list<string> AllWord;
+	list<Label*> AllLabel;
+	void ShowChat(bool is_clear);
+	cocos2d::ui::TextField* ChatField;
+	void chat(Ref *pSender, cocos2d::ui::TextField::EventType type);
 	//debug
 	void test(float t);
 

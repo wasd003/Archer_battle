@@ -42,6 +42,8 @@ bool MultiGameScene::init()
 	this->addChild(map, -1);
 	GetPos();
 	InitMap();
+
+
 	//创建主角
 	auto model = Person::CreatePerson("person.png");
 	model->setTag(ModelTag);
@@ -51,27 +53,72 @@ bool MultiGameScene::init()
 	RoleModel = model;
 
 
-	//编辑框
+	//昵称编辑框
 	textField = cocos2d::ui::TextField::create("input you name", "Arial", 30);
 	textField->setMaxLengthEnabled(true);
 	textField->setMaxLength(8);
-	textField->setPosition(Vec2(winsize.width / 2.0f, winsize.height / 2.0f));
+	textField->setPosition(Vec2(480,400));
 	textField->addEventListener(CC_CALLBACK_2(MultiGameScene::textFieldEvent, this));
 	textField->retain();
 	this->addChild(textField);
 
+
+	//聊天编辑框
+	ChatField=cocos2d::ui::TextField::create("input", "Arial", 30);
+	ChatField->setMaxLength(25);
+	ChatField->setMaxLength(true);
+	ChatField->setPosition(Vec2(480, 100));
+	ChatField->addEventListener(CC_CALLBACK_2(MultiGameScene::chat, this));
+	ChatField->setVisible(false);
+	ChatField->setZOrder(150);
+	this->addChild(ChatField);
+	//触发聊天界面按钮
 	
+	auto button = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
+	button->setPosition(Vec2(900, 400));
+	button->addTouchEventListener([&](Ref* sender, Widget::TouchEventType type) {
+		switch (type)
+		{
+		case ui::Widget::TouchEventType::BEGAN:
+			break;
+		case ui::Widget::TouchEventType::ENDED:
+			//添加背景图片
+			auto bg = Sprite::create("background_edit.png");
+			bg->setPosition(Vec2(480, 240));
+			bg->setZOrder(100);
+			this->addChild(bg);
+			
+			//添加返回按钮
+
+			//添加文本编辑框
+			ChatField->setVisible(true);
+			break;
+		
+		}
+	});
+	this->addChild(button);
 	
+	//聊天Label
+	for (int i = 1; i <= 7; i++)
+	{
+		auto label = Label::createWithTTF("", "fonts/Marker Felt.ttf", 32);
+		label->setPosition(Vec2(480, 100+i*50));
+		label->setColor(Color3B::RED);
+		label->setZOrder(150);
+		this->addChild(label);
+		AllLabel.push_back(label);
+	}
+	/*
 	//通信
 	now = this;
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("100.66.49.237", 8867);
+	res = sock_client->Connect("100.66.48.188", 8867);
 	this->sock_client->setTimeOut(10);//设置recv超时时间
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
-	
+	*/
 
 
 	//加载所有玩家
@@ -121,6 +168,61 @@ bool MultiGameScene::init()
 	return true;
 }
 
+//聊天室
+
+void MultiGameScene::ShowChat(bool is_clear)//true:label全部赋为空字符串，如果不是，更新显示
+{
+	if (is_clear)
+	{
+		for (auto NowLabel : AllLabel)
+		{
+			NowLabel->setString(String::createWithFormat("")->_string);
+		}
+		return;
+	}
+	list<string>::iterator word = AllWord.begin();
+	list<Label*>::iterator label = AllLabel.begin();
+	for (;word!=AllWord.end()&&label!=AllLabel.end();word++,label++)
+	{
+		string NowWord = *word;
+		Label* NowLabel = *label;
+		NowLabel->setString(String::createWithFormat("%s",NowWord.c_str())->_string);
+	}
+}
+void MultiGameScene::chat(Ref *pSender, cocos2d::ui::TextField::EventType type)
+{
+	switch (type)
+	{
+	case cocos2d::ui::TextField::EventType::ATTACH_WITH_IME://点击编辑框
+	{
+	}
+	break;
+
+	case cocos2d::ui::TextField::EventType::DETACH_WITH_IME://点击编辑框的其他位置
+	{
+		auto s = static_cast<TextField*>(pSender);
+		this->LastWord = s->getString();
+		AllWord.push_front(s->getString());
+		ShowChat(false);
+		s->setText("");
+	}
+	break;
+
+	case cocos2d::ui::TextField::EventType::INSERT_TEXT://键盘输入
+	{
+	}
+	break;
+
+	case cocos2d::ui::TextField::EventType::DELETE_BACKWARD://键盘删除
+	{
+		
+	}
+	break;
+
+	default:
+		break;
+	}
+}
 
 //编辑框回调函数
 void MultiGameScene::textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type)
@@ -134,6 +236,7 @@ void MultiGameScene::textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventT
 
 	case cocos2d::ui::TextField::EventType::DETACH_WITH_IME://点击编辑框的其他位置
 	{
+		//this->textField->setVisible(false);//设置为不可见和直接删除都可以
 		this->textField->removeFromParent();//输入完成，删除编辑框
 	}
 	break;
