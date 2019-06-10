@@ -74,7 +74,7 @@ bool MultiGameScene::init()
 	this->addChild(ChatField);
 
 	//聊天室返回按钮
-	back = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
+	back = Button::create("back.png", "back.png", "back.png");
 	back->setPosition(Vec2(900, 100));
 	back->addTouchEventListener([&](Ref* sender, Widget::TouchEventType type) {
 			switch (type)
@@ -95,7 +95,7 @@ bool MultiGameScene::init()
 	this->addChild(back);
 	//触发聊天界面按钮
 	
-	button = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
+	button = Button::create("chat.png", "chat.png", "chat.png");
 	button->setPosition(Vec2(900, 400));
 	button->addTouchEventListener([&](Ref* sender, Widget::TouchEventType type) {
 		switch (type)
@@ -131,7 +131,7 @@ bool MultiGameScene::init()
 		this->addChild(label);
 		AllLabel.push_back(label);
 	}
-
+	/*
 	//通信
 	now = this;
 	sock_client = new ODsocket();
@@ -141,7 +141,7 @@ bool MultiGameScene::init()
 	this->sock_client->setTimeOut(10);//设置recv超时时间
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
-	
+	*/
 
 
 	//加载所有玩家
@@ -224,8 +224,8 @@ void MultiGameScene::chat(Ref *pSender, cocos2d::ui::TextField::EventType type)
 	case cocos2d::ui::TextField::EventType::DETACH_WITH_IME://点击编辑框的其他位置
 	{
 		auto s = static_cast<TextField*>(pSender);
-		this->LastWord = s->getString();
-		AllWord.push_front(s->getString());
+		this->LastWord = RoleModel->name+"  :  "+s->getString();
+		AllWord.push_front(LastWord);
 		ShowChat(false);
 		s->setText("");
 	}
