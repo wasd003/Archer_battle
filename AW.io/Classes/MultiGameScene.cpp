@@ -72,9 +72,30 @@ bool MultiGameScene::init()
 	ChatField->setVisible(false);
 	ChatField->setZOrder(150);
 	this->addChild(ChatField);
+
+	//聊天室返回按钮
+	back = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
+	back->setPosition(Vec2(900, 100));
+	back->addTouchEventListener([&](Ref* sender, Widget::TouchEventType type) {
+			switch (type)
+		{
+		case ui::Widget::TouchEventType::BEGAN:
+			break;
+		case ui::Widget::TouchEventType::ENDED:
+			ShowChat(true);
+			ChatField->setVisible(false);
+			Sprite* bg = static_cast<Sprite*>(getChildByTag(133));
+			bg->removeFromParent();
+			back->setVisible(false);
+			button->setVisible(true);
+		}
+	});
+	back->setVisible(false);
+	back->setZOrder(150);
+	this->addChild(back);
 	//触发聊天界面按钮
 	
-	auto button = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
+	button = Button::create("CloseNormal.png", "sCloseSelected.png", "person.png");
 	button->setPosition(Vec2(900, 400));
 	button->addTouchEventListener([&](Ref* sender, Widget::TouchEventType type) {
 		switch (type)
@@ -87,11 +108,13 @@ bool MultiGameScene::init()
 			bg->setPosition(Vec2(480, 240));
 			bg->setZOrder(100);
 			this->addChild(bg);
-			
+			bg->setTag(133);
 			//添加返回按钮
-
+			back->setVisible(true);
 			//添加文本编辑框
 			ChatField->setVisible(true);
+			//隐藏自身
+			button->setVisible(false);
 			break;
 		
 		}
@@ -108,17 +131,17 @@ bool MultiGameScene::init()
 		this->addChild(label);
 		AllLabel.push_back(label);
 	}
-	/*
+
 	//通信
 	now = this;
 	sock_client = new ODsocket();
 	sock_client->Init();
 	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("100.66.48.188", 8867);
+	res = sock_client->Connect("100.67.238.31", 8867);
 	this->sock_client->setTimeOut(10);//设置recv超时时间
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
-	*/
+	
 
 
 	//加载所有玩家
@@ -268,7 +291,7 @@ void MultiGameScene::postMessage(float t)
 
 
 	Vec2 NowPos = now->map->getPosition();
-	if (NowPos == now->LastPos && !now->LastArrow)
+	if (NowPos == now->LastPos && !now->LastArrow&&LastWord.empty())
 	{
 		return;
 	}
@@ -353,6 +376,12 @@ void MultiGameScene::StringToData()
 			this->addChild(arrow);
 			AllArrow.pushBack(arrow);
 		}*/
+		if (document.HasMember("Word"))
+		{
+			string word = document["Word"].GetString();
+			AllWord.push_front(word);
+			ShowChat(false);
+		}
 		if (document.HasMember("Arrow")) {
 			rapidjson::Value o;      //使用一个新的rapidjson::Value来存放object
 			o = document["Arrow"];
@@ -395,10 +424,15 @@ void MultiGameScene::DataToString()//数据转化成json字符串
 	document.AddMember("Blue", RoleModel->blue, allocator);
 	document.AddMember("deltaX", deltaX, allocator);
 	document.AddMember("deltaY", deltaY, allocator);
-	const string & name = RoleModel->name;
 	rapidjson::Value val;
+	const string & name = RoleModel->name;
 	document.AddMember("Name", val.SetString(name.c_str(), allocator), allocator);
-
+	if (LastWord.size())
+	{
+		const string &word = LastWord;
+		document.AddMember("Word", val.SetString(word.c_str(), allocator), allocator);//如果发言了就传话
+		LastWord.clear();
+	}
 	if (LastArrow)
 	{
 		rapidjson::Value arrow(kObjectType);

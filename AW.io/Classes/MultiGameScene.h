@@ -54,17 +54,19 @@ public:
 	virtual void MovePerson(float t);
 	virtual void ShowBlood(float t);
 
-	//编辑框
+	//输入昵称编辑框
 	void textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type);
 	cocos2d::ui::TextField* textField;//编辑框对象
 
 
 	//聊天室
-	list<string> AllWord;
-	list<Label*> AllLabel;
-	void ShowChat(bool is_clear);
-	cocos2d::ui::TextField* ChatField;
-	void chat(Ref *pSender, cocos2d::ui::TextField::EventType type);
+	list<string> AllWord;//保存聊天记录
+	list<Label*> AllLabel;//显示聊天记录的label
+	void ShowChat(bool is_clear);//更新label显示
+	cocos2d::ui::TextField* ChatField;//聊天文本编辑框
+	void chat(Ref *pSender, cocos2d::ui::TextField::EventType type);//对输入的内容进行处理
+	cocos2d::ui::Button* back;//聊天室关闭按钮
+	cocos2d::ui::Button* button;//聊天室开启按钮
 	//debug
 	void test(float t);
 
