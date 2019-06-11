@@ -151,7 +151,7 @@ bool MultiGameScene::init()
 	InitHeartStar();
 
 	//ÉèÖÃÒ¡¸Ë 
-	auto rocker = Rocker::create("CloseSelected.png", "rr.png", rockerBG_Position,Vec2(130,130));
+	auto rocker = Rocker::create("button.png", "RockerBG.png", rockerBG_Position,Vec2(130,130));
 	rocker->setTag(RockerTag);
 	this->addChild(rocker);
 	rocker->StartRocker();
@@ -247,7 +247,7 @@ void MultiGameScene::chat(Ref *pSender, cocos2d::ui::TextField::EventType type)
 	}
 }
 
-//±à¼­¿ò»Øµ÷º¯Êý
+//êÇ³Æ±à¼­¿ò»Øµ÷º¯Êý
 void MultiGameScene::textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type)
 {
 	switch (type)

@@ -69,7 +69,7 @@ void Rocker::onTouchEnded(Touch* t, Event *e)
 	auto rocker = static_cast<Sprite*>(getChildByTag(tag_rocker));
 	auto rockerBG = static_cast<Sprite*>(getChildByTag(tag_rockerBG));
 	Vec2 pos = rockerBG->getPosition();
-	rocker->setPosition(pos);
+	rocker->setPosition(Vec2(130,130));
 	return;
 }
 float Rocker::getRad(Vec2 pos1, Vec2 pos2)

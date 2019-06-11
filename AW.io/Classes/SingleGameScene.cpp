@@ -8,6 +8,7 @@
 #include<cstring>
 #include<string>
 #include <random>
+#include "GameOverScene.h"
 USING_NS_CC;
 
 bool SingleGameScene::init()
@@ -48,7 +49,7 @@ bool SingleGameScene::init()
 	//创建星星和心
 	InitHeartStar();
 	//设置摇杆
-	auto rocker = Rocker::create("CloseSelected.png","rr.png", rockerBG_Position,Vec2(130,130));
+	auto rocker = Rocker::create("button.png", "RockerBG.png", rockerBG_Position, Vec2(130, 130));
 	rocker->setTag(RockerTag);
 	this->addChild(rocker);
 	rocker->StartRocker();
@@ -435,7 +436,7 @@ void SingleGameScene::Shoot(float t)
 		if (hash_table.at(NowPerson) != NullPerson)
 		{
 			auto target = hash_table.at(NowPerson);
-			auto arrow = Arrow::CreateArrow("CloseNormal.png");
+			auto arrow = Arrow::CreateArrow("bullet.png");
 			arrow->setPosition(NowPerson->getPosition());
 			arrow->StartPosition = NowPerson->getPosition();
 			arrow->master = NowPerson;
@@ -463,11 +464,13 @@ void SingleGameScene::MoveAllPerson(float t)
 			float dy = NowPerson->speed * sin(dir);
 			Vec2 next_pos = Vec2(NowPerson->getPositionX() + height*cos(dir), NowPerson->getPositionY() + height*sin(dir));
 			auto dis = distance(NowPerson->getPosition(), direct->getPosition());
+			if (dis >= min_attack_area && dis <= max_attack_area) continue;
 			if (dis < min_attack_area)
 			{
 				next_pos= Vec2(NowPerson->getPositionX() - height*cos(dir), NowPerson->getPositionY() - height*sin(dir));
 				dx = -dx, dy = -dy;
 			}
+			
 			if (check(next_pos))
 			{
 				NowPerson->setPosition(Vec2(NowPerson->getPositionX()+dx,NowPerson->getPositionY()+dy));
@@ -576,7 +579,7 @@ void SingleGameScene::Dead(float t)
 			auto Model = getChildByTag(ModelTag);
 			if (NowPerson == Model)
 			{
-				log("Model is dead!!!");
+				Director::getInstance()->replaceScene(GameOverScene::CreateScene());
 			}
 			auto blood = blood_hash.at(NowPerson);
 			this->removeChild(blood);
@@ -841,6 +844,7 @@ void SingleGameScene::InitValue()
 	height = 20;
 	attack_area = 500;
 	min_attack_area = 250;
+	max_attack_area = 300;
 	counts = 0;
 	LabelScore= Label::createWithTTF("Score:0", "fonts/Marker Felt.ttf", 32);
 	LabelScore->setPosition(Vec2(100, 400));

@@ -63,7 +63,8 @@ public:
 	int height;//从人物的中心点出发到达矩形的四条边的距离
 	int MonsterNumber;//维持局面中至少的怪物个数
 	int attack_area;//方圆attack_area内，如果有人，会默认朝该人移动
-	int min_attack_area;//怪物之间距离允许的最小值
+	int min_attack_area;//怪物之间距离下限
+	int max_attack_area;//怪物之间距离上限
 	Person* NullPerson;
 	Arrow* NowWeapon_1;
 	Arrow* NowWeapon_2;

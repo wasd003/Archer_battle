@@ -24,6 +24,6 @@ void Person::InitPerson(const std::string &filename)
 	person_score = 0;
 	arrow_range = 1.0;
 	this->name = "kevin";//³õÊ¼Ãû×Ö½Ğ×ökevin
-	weapon = Arrow::CreateArrow("CloseNormal.png");
+	weapon = Arrow::CreateArrow("bullet.png");
 	weapon->retain();
 }

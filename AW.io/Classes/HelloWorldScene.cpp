@@ -82,7 +82,7 @@ bool HelloWorld::init()
     }
 
    //创建初始场景的背景图片
-    auto sprite = Sprite::create("background.jpg");
+    auto sprite = Sprite::create("background.png");
     if (sprite == nullptr)
     {
         problemLoading("'HelloWorld.png'");
