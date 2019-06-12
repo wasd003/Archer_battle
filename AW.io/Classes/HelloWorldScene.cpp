@@ -1,6 +1,7 @@
 #include "HelloWorldScene.h"
 #include "SimpleAudioEngine.h"
 #include "SingleGameScene.h"
+#include "Land.h"
 #include "MultiGameScene.h"
 #include "HelpScene.h"
 #include "StoreScene.h"
@@ -114,7 +115,7 @@ void HelloWorld::menuCallback(Ref* pSender)
 		Director::getInstance()->replaceScene(SingleGameScene::CreateScene());
 		break;
 	case MultiGameTag:
-		Director::getInstance()->replaceScene(MultiGameScene::CreateScene());
+		Director::getInstance()->replaceScene(Land::CreateScene());
 		break;
 	case HelpTag:
 		Director::getInstance()->replaceScene(HelpScene::CreateScene());

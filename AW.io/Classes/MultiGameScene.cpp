@@ -29,6 +29,7 @@ Scene* MultiGameScene::CreateScene()
 bool MultiGameScene::init()
 {
 	if (!Layer::init())return false;
+
 	//初始化
 	auto winsize = Director::getInstance()->getWinSize();
 	this->InitValue();
@@ -52,8 +53,8 @@ bool MultiGameScene::init()
 	AllPersonList.push_back(model);
 	RoleModel = model;
 
-
-	//昵称编辑框
+	//昵称编辑框-->调整到在land层实现
+/*
 	textField = cocos2d::ui::TextField::create("input you name", "Arial", 30);
 	textField->setMaxLengthEnabled(true);
 	textField->setMaxLength(8);
@@ -61,7 +62,7 @@ bool MultiGameScene::init()
 	textField->addEventListener(CC_CALLBACK_2(MultiGameScene::textFieldEvent, this));
 	textField->retain();
 	this->addChild(textField);
-
+*/
 
 	//聊天编辑框
 	ChatField=cocos2d::ui::TextField::create("input", "Arial", 30);
@@ -131,17 +132,12 @@ bool MultiGameScene::init()
 		this->addChild(label);
 		AllLabel.push_back(label);
 	}
-	/*
+	
 	//通信
 	now = this;
-	sock_client = new ODsocket();
-	sock_client->Init();
-	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
-	res = sock_client->Connect("100.67.238.31", 8867);
-	this->sock_client->setTimeOut(10);//设置recv超时时间
 	this->schedule(schedule_selector(MultiGameScene::postMessage, this));
 	this->schedule(schedule_selector(MultiGameScene::getMessage, this));
-	*/
+	
 
 
 	//加载所有玩家
@@ -162,7 +158,7 @@ bool MultiGameScene::init()
 	this->schedule(schedule_selector(MultiGameScene::Dead, this));
 
 	//星星和心的补充
-	//this->schedule(schedule_selector(SingleGameScene::SupplyHeartStar, this));
+	this->schedule(schedule_selector(SingleGameScene::SupplyHeartStar, this));
 
 	//控制人物移动
 	auto MoveListen = EventListenerTouchOneByOne::create();
@@ -281,15 +277,24 @@ void MultiGameScene::textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventT
 		break;
 	}
 }
-
+void MultiGameScene::LandMsg(Ref* pSender) {
+	auto msg = (String*)pSender;
+	log("testMsg: %s", msg->getCString());
+}
 
 //联网模块
+void MultiGameScene::connect()
+{
+	sock_client = new ODsocket();
+	sock_client->Init();
+	bool res = sock_client->Create(AF_INET, SOCK_STREAM, 0);
+	res = sock_client->Connect(this->Ip, 8867);
+	this->sock_client->setTimeOut(10);//设置recv超时时间
+}
 void MultiGameScene::postMessage(float t)
 {
-
+	if (this->Ip.empty())return;
 	Person* model = static_cast<Person*>(now->getChildByTag(ModelTag));
-
-
 	Vec2 NowPos = now->map->getPosition();
 	if (NowPos == now->LastPos && !now->LastArrow&&LastWord.empty())
 	{
@@ -305,6 +310,7 @@ void MultiGameScene::postMessage(float t)
 void MultiGameScene::getMessage(float t)
 
 {
+	if (this->Ip.empty())return;
 	char buffer[1024];
 	memset(buffer, 0, sizeof(buffer));
 	now->sock_client->Recv(buffer, sizeof(buffer));
@@ -736,7 +742,7 @@ void MultiGameScene::MoveArrow(float t)
 }
 void MultiGameScene::test(float t)
 {
-	
+	log("%s", RoleModel->name.c_str());
 }
 
 

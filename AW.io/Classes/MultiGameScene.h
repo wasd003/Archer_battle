@@ -30,6 +30,8 @@ public:
 	std::string	MessageToPost;//要发送给服务器的信息
 	void StringToData();//解析json串
 	void DataToString();//将数据封装成json串，转化后的串储存在MessageToPost中
+	void connect();
+
 
 	//存储容器
 	//list<Arrow*>MyArrow;//保存我射出的箭
@@ -41,8 +43,7 @@ public:
 	Vec2 LastPos;//上一次的位置
 	Arrow* LastArrow;//发出的箭
 	string LastWord;
-
-	
+	string Ip;//服务器地址
 
 	//函数重写
 	void InitAllPerson();
@@ -54,10 +55,12 @@ public:
 	virtual void MovePerson(float t);
 	virtual void ShowBlood(float t);
 
+	
 	//输入昵称编辑框
 	void textFieldEvent(Ref *pSender, cocos2d::ui::TextField::EventType type);
 	cocos2d::ui::TextField* textField;//编辑框对象
 
+	void LandMsg(Ref* pSender);
 
 	//聊天室
 	list<string> AllWord;//保存聊天记录

@@ -2,6 +2,7 @@
 #include "HelloWorldScene.h"
 #include "SingleGameScene.h"
 #include "MultiGameScene.h"
+#include "Land.h"
 USING_NS_CC;
 
 Scene* GameOverScene::CreateScene()
@@ -13,6 +14,8 @@ Scene* GameOverScene::CreateScene()
 }
 bool GameOverScene::init()
 {
+	if (!Layer::init())return false;
+	
 	auto EndBG = Sprite::create("background.png");
 	EndBG->setPosition(Vec2(480, 240));
 	this->addChild(EndBG);
@@ -20,7 +23,7 @@ bool GameOverScene::init()
 		Director::getInstance()->replaceScene(SingleGameScene::CreateScene());
 	});//单人游戏
 	auto MultiGameItem = MenuItemFont::create("start MultiGame again", [&](Ref*) {
-		Director::getInstance()->replaceScene(MultiGameScene::CreateScene());
+		Director::getInstance()->replaceScene(Land::CreateScene());
 	});//多人游戏
 	auto closeItem = MenuItemFont::create("Close",
 		[&](Ref* sender) {
