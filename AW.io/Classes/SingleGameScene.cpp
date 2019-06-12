@@ -177,6 +177,10 @@ void SingleGameScene::MovePerson(float t)
 {
 	
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	Vector<Sprite*>ToEraseStar,	ToEraseHeart;
 	float dir = Rocker::getRad(rockerBG_Position, current_point);
 	if (rockerBG_Position == current_point)return;
@@ -275,6 +279,10 @@ void SingleGameScene::ArrowMoved(Touch* t, Event*e)//射箭
 {
 
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	Vec2 NowPos = t->getLocation();
 	Vec2 ModelPos = model->getPosition();
 	float dir = Rocker::getRad(ModelPos, NowPos);
@@ -287,6 +295,10 @@ void SingleGameScene::ArrowEnded(Touch*t, Event*e)
 
 	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	std::string picture = model->weapon->picture;
 	//创建一只箭，用人物的weapon对箭进行赋值
 	auto arrow = Arrow::CreateArrow(picture);
@@ -360,6 +372,10 @@ void SingleGameScene::CreateMonster(float t)
 	}
 	GetPos();
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	auto monster = Person::CreatePerson("monster.png");
 	Vec2 pos;
 	int maxv = 0;
@@ -429,7 +445,11 @@ void SingleGameScene::MoveDirect(float t)
 }
 void SingleGameScene::Shoot(float t)
 {
-	auto model = getChildByTag(ModelTag);
+	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	for (auto NowPerson : AllPerson)
 	{
 		if (NowPerson == model)continue;
@@ -450,7 +470,11 @@ void SingleGameScene::Shoot(float t)
 void SingleGameScene::MoveAllPerson(float t)
 {
 	srand(time(NULL));
-	auto model = getChildByTag(ModelTag);
+	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	int dx[4] = { -1,0,1,0 };
 	int dy[4] = { 0,1,0,-1 };
 	for (auto NowPerson:AllPerson)
@@ -522,6 +546,10 @@ void SingleGameScene::Hurt(float t)
 {
 	Vector<Arrow*>ToErase;
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	for (auto NowPerson : AllPerson)
 	{
 		Rect NowPerson_pos = Rect(NowPerson->getPositionX(), NowPerson->getPositionY(), height * 2, height * 2);
@@ -571,12 +599,11 @@ void SingleGameScene::Hurt(float t)
 void SingleGameScene::Dead(float t)
 {
 	Vector<Person*>ToErase;
-	
+	auto Model = getChildByTag(ModelTag);
 	for (auto NowPerson : AllPerson)
 	{
 		if (NowPerson->blood <= 0)
 		{
-			auto Model = getChildByTag(ModelTag);
 			if (NowPerson == Model)
 			{
 				Director::getInstance()->replaceScene(GameOverScene::CreateScene());
@@ -607,6 +634,10 @@ void SingleGameScene::MenuCallBack(cocos2d::Ref* pSender)
 	auto NowItem = static_cast<MenuItem*>(pSender);//得到当前点击的菜单项
 	int tag = NowItem->getTag();
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	switch (tag)
 	{
 	case 1:
@@ -714,6 +745,10 @@ void SingleGameScene::ChangeWeapon(float t)
 {
 	srand(time(NULL));
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	if (!model)
 	{
 		log("wtf");

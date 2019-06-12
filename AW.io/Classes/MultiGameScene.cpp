@@ -11,6 +11,7 @@
 #include "Arrow.h"
 #include "Rocker.h"
 #include "ui/CocosGUI.h"
+#include "GameOverScene.h"
 #pragma comment(lib, "pthreadVC2.lib")
 using namespace  rapidjson;
 using namespace std;
@@ -104,6 +105,8 @@ bool MultiGameScene::init()
 		case ui::Widget::TouchEventType::BEGAN:
 			break;
 		case ui::Widget::TouchEventType::ENDED:
+			//展示历史聊天记录
+			ShowChat(false);
 			//添加背景图片
 			auto bg = Sprite::create("background_edit.png");
 			bg->setPosition(Vec2(480, 240));
@@ -174,7 +177,7 @@ bool MultiGameScene::init()
 	auto ArrowListen = EventListenerTouchOneByOne::create();
 	ArrowListen->onTouchBegan = CC_CALLBACK_2(SingleGameScene::ArrowBegan, this);
 	ArrowListen->onTouchMoved = CC_CALLBACK_2(SingleGameScene::ArrowMoved, this);
-	ArrowListen->onTouchEnded = CC_CALLBACK_2(MultiGameScene::ArrowEnded, this);//重写-->完成
+	ArrowListen->onTouchEnded = CC_CALLBACK_2(MultiGameScene::ArrowEnded, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(ArrowListen, this);
 	this->schedule(schedule_selector(MultiGameScene::MoveArrow, this));//我方箭的移动
 
@@ -182,7 +185,7 @@ bool MultiGameScene::init()
 	//显示血量
 	this->schedule(schedule_selector(MultiGameScene::ShowBlood, this));
 	this->schedule(schedule_selector(SingleGameScene::ChangeWeapon, this));
-	this->schedule(schedule_selector(MultiGameScene::test, this));
+	//this->schedule(schedule_selector(MultiGameScene::test, this));
 	this->schedule(schedule_selector(MultiGameScene::Hurt, this));//我方箭与其他玩家的碰撞检测
 	return true;
 }
@@ -315,11 +318,6 @@ void MultiGameScene::getMessage(float t)
 	memset(buffer, 0, sizeof(buffer));
 	now->sock_client->Recv(buffer, sizeof(buffer));
 	now->strmsg = buffer;
-	log("getmessage:%s", now->strmsg.c_str());
-	if (now->strmsg.find("Arrow") != now->strmsg.npos)
-	{
-		log("debug");
-	}
 	now->StringToData();
 }
 void MultiGameScene::StringToData()
@@ -386,7 +384,7 @@ void MultiGameScene::StringToData()
 		{
 			string word = document["Word"].GetString();
 			AllWord.push_front(word);
-			ShowChat(false);
+			//ShowChat(false);
 		}
 		if (document.HasMember("Arrow")) {
 			rapidjson::Value o;      //使用一个新的rapidjson::Value来存放object
@@ -607,33 +605,36 @@ void MultiGameScene::MovePerson(float t)
 void MultiGameScene::Dead(float t)//自己死，场景跳转，别人死，从排行榜上除名
 {
 	list<Person*>ToErase;
-
+	Person* Model = static_cast<Person*>(getChildByTag(ModelTag));
 	for (auto NowPerson : AllPersonList)
 	{
 		if (NowPerson->blood <= 0)
 		{
-			auto Model = getChildByTag(ModelTag);
+			
 			if (NowPerson == Model)
 			{
-				log("Model is dead!!!");
+				Director::getInstance()->replaceScene(GameOverScene::CreateScene());
 			}
 			auto blood = blood_hash.at(NowPerson);
 			this->removeChild(blood);
 			ToErase.push_back(NowPerson);
+			dead.insert(NowPerson->name);//需要在它的内存还没有释放之前把它的名字添加进死亡名单
 			NowPerson->removeFromParent();
 		}
 	}
 	for (auto x : ToErase)
 	{
-		dead.insert(x->name);//将已死亡的玩家加入死亡名单
 		AllPersonList.remove(x);
-
 	}
 }
 void MultiGameScene::ArrowEnded(Touch* t, Event*e)//需要把射出的箭添加进MyArrow数组中
 {
 	if (start == t->getLocation())return;
 	Person* model = static_cast<Person*>(this->getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	std::string picture = model->weapon->picture;
 	//创建一只箭，用人物的weapon对箭进行赋值
 	auto arrow = Arrow::CreateArrow(picture);
@@ -658,6 +659,10 @@ void MultiGameScene::Hurt(float t)
 {
 	list<Arrow*>ToErase;
 	Person* model = static_cast<Person*>(getChildByTag(ModelTag));
+	if (!model)
+	{
+		Director::getInstance()->replaceScene(GameOverScene::CreateScene());
+	}
 	for (list<Person*>::iterator it = AllPersonList.begin(); it != AllPersonList.end(); ++it)
 	{
 		Person* NowPerson = *it;
@@ -665,8 +670,6 @@ void MultiGameScene::Hurt(float t)
 		for (Vector<Arrow*>::iterator i = AllArrow.begin(); i != AllArrow.end(); ++i)
 		{
 			Arrow* NowArrow = *i;
-			//log("%s", NowArrow->picture.c_str());
-			//log("%x", NowArrow);
 			Rect NowArrow_pos = Rect(NowArrow->getPositionX(), NowArrow->getPositionY(), NowArrow->arrow_size, NowArrow->arrow_size);
 			if (NowPerson_pos.intersectsRect(NowArrow_pos))//箭射中人
 			{
