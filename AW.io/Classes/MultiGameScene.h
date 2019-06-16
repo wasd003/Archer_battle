@@ -70,6 +70,7 @@ public:
 	void chat(Ref *pSender, cocos2d::ui::TextField::EventType type);//对输入的内容进行处理
 	cocos2d::ui::Button* back;//聊天室关闭按钮
 	cocos2d::ui::Button* button;//聊天室开启按钮
+	bool is_chatting;//是否处在聊天框界面
 	//debug
 	void test(float t);
 

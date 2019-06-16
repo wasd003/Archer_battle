@@ -44,7 +44,7 @@ bool MultiGameScene::init()
 	this->addChild(map, -1);
 	GetPos();
 	InitMap();
-
+	is_chatting = false;
 
 	//创建主角
 	auto model = Person::CreatePerson("person.png");
@@ -90,6 +90,7 @@ bool MultiGameScene::init()
 			bg->removeFromParent();
 			back->setVisible(false);
 			button->setVisible(true);
+			is_chatting = false;
 		}
 	});
 	back->setVisible(false);
@@ -119,6 +120,8 @@ bool MultiGameScene::init()
 			ChatField->setVisible(true);
 			//隐藏自身
 			button->setVisible(false);
+			//处在聊天状态
+			is_chatting = true;
 			break;
 		
 		}
@@ -384,7 +387,10 @@ void MultiGameScene::StringToData()
 		{
 			string word = document["Word"].GetString();
 			AllWord.push_front(word);
-			//ShowChat(false);
+			if (is_chatting)
+			{
+				ShowChat(false);
+			}
 		}
 		if (document.HasMember("Arrow")) {
 			rapidjson::Value o;      //使用一个新的rapidjson::Value来存放object
